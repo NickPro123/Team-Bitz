@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <link rel="stylesheet" type="text/css" href="css/style.css">
+      <title>Prime Health Care - Sign Up</title>
+
+        <script>
+          function validate(form)
+          {
+            fail = validateName(form.firstName.value)
+            fail += validateName(form.lastName.value)
+            fail += validatePassword(form.password.value)
+            fail += validateConfirmPassword(form.password.value, form.confirmPass.value)
+<!--            fail += validateEmail(form.email.value) -->
+
+            if   (fail == "")   return true
+            else { alert(fail); return false }
+          }
+
+          function validateName(field)
+          {
+            if (field == "") return "No name was entered.\n"
+            else if (field.length < 2)
+              return "Names must be at least 2 characters.\n"
+            else if (/[^a-zA-Z']/.test(field))
+              return "Only a-z, A-Z and ' allowed in a name.\n"
+            return ""
+          }
+
+          function validatePassword(field)
+          {
+            if (field == "") return "No Password was entered.\n"
+            else if (field.length < 6)
+              return "Passwords must be at least 6 characters.\n"
+            else if (! /[a-z]/.test(field) ||
+                     ! /[A-Z]/.test(field) ||
+                     ! /[0-9]/.test(field))
+              return "Passwords require one each of a-z, A-Z and 0-9.\n"
+
+            return ""
+          }
+
+          function validateConfirmPassword(field, field2){
+            if (field != field2)
+            return "Passwords do not match.\n"
+            return ""
+          }
+
+
+        </script>
+  </head>
+  <header>
+    <a href="index.html">
+      <img src="images/logo.png"  class="logo">
+    </a>
+  </header>
+  <body>
+      <form method="post" action="adduser.php" onsubmit="return validate(this)" class="signUp">
+          <h3>Sign Up Form</h3>
+          <label for="firstName">First Name</label>
+          <input type="text" maxlength="24" id="firstName" name="firstName" required="required">
+
+          <label for="lastName">Last Name</label>
+          <input type="text" maxlength="64" id="lastName" name="lastName" required="required">
+
+          <label for="password">Password (Minimum 6 characters, Must use Uppercase, Lowercase and a Number.)</label>
+          <input type="password" maxlength="128" id="password" name="password" required="required">
+
+          <label for="confirmPass">Confirm Password</label>
+          <input type="password" maxlength="128" id="confirmPass" name="confirmPass" required="required">
+
+          <input type="submit" value="Sign Up">
+      </form>
+      <form method="post" action="login.php" onsubmit="return true" class="signUp">
+          <input type="submit" value="Login">
+      </form>
+  </body>
+</html>
