@@ -16,16 +16,35 @@ echo "
       <img src='images/logo.png' class='logo'>
   </header>
     <body>
-    <table class='signup' border='0' cellpadding='2' cellspacing='5' bgcolor='#eeeeee'>
-      <th colspan='2' align='center'>Main Menu</th>
-      <tr><td>
-      <ul class='menu'> 
-          <li><a href='view.php'>View</a></li>               
-          <li><a href='search.php'>Search</a></li> 
-          <li><a href='add.php'>Add</a></li>               
-                    
-          <li><a href='delete.php'>Delete</a></li></ul>
-      </tr></td>
+      <th colspan='2' align='center'>Main Menu</th>";
+      
+      $result = queryMysql("select * from patient");
+  if ($result->num_rows > 0)
+  {
+   echo "<style>
+        table {
+            border-collapse: collapse;
+        }
+                   
+        </style>
+      
+      <table border = '1'>
+  <tr>
+      <th>ID</th>
+    <th>Name</th>
+    <th>Room Number</th> 
+    
+  </tr>";
+    while ($row = mysqli_fetch_assoc($result)){
+  echo "<tr>
+    <th>".$row["patientID"]."</th> 
+    <th>".$row["firstName"]." ".$row["lastName"]."</th>
+    <th>".$row["roomNumber"]."</th></tr>";
+            
+    }
+echo "    
+      
+    </table>
       </form>
             <form method='post' action='logout.php' onsubmit='return true'>
         <tr><td colspan='2' align='center'><input type='submit' value='Logout'></td></tr>
@@ -33,6 +52,9 @@ echo "
       
     </table>
   </body>";
+  }else{
+     echo "There is no data to be displayed please <a href='main.php'>add</a> some.";
+  }
   
   }else{
   echo "You are not logged in
@@ -40,5 +62,4 @@ echo "
   }
 ?>
 
-    
-</html>
+
