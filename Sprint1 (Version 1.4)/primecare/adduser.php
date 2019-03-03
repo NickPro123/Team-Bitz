@@ -72,25 +72,37 @@
 */
 
 //Generate a unique username using Database
-function create_username($firstName, $lastName,  $rand_no = 10)
+function create_username($firstName, $lastName,  $sec_no = 0)
   {
     while(true)
     {
         $part1 = substr($lastName, 0,4); //cut second name to 5 letters
         $part2 = substr($firstName, 0,1); //cut first name to 8 letters
-        $part3 = ($rand_no)?rand(0, 10):"";
+        if($sec_no == 0)
+        {
+            $part3 = "";
+        }
+        else
+        {
+            $part3 = $sec_no;
+        }
 		
         $username = $part1. $part2. $part3; //str_shuffle to randomly shuffle all characters 
         $username = strtolower($username);
-       return $username;
+    //   return $username;
 		
-    /*
+    
         $username_exist_in_db = username_exist_in_database($username); //check username in database
         if(!$username_exist_in_db)
         {
             return $username;
         }
-      */  
+        
+        else
+        {
+            create_username($firstName,$lastName, ++$sec_no);
+        }
+       
     
     }
 }

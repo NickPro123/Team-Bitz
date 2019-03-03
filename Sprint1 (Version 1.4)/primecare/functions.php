@@ -3,9 +3,9 @@
 //Joseph Mineo
 //R01581419
   $hn  = 'localhost';    
-  $un  = 'root'; 
-  $pw  = '';   
-  $db = "primecare1"; 
+  $un  = 'id8869832_admin'; 
+  $pw  = '&JOEwIF25m8lZmngP13w';   
+  $db = "id8869832_primecare"; 
 
   $connection = new mysqli($hn, $un, $pw, $db);
   if ($connection->connect_error) die($connection->connect_error);
@@ -28,20 +28,43 @@
 
   function username_exist_in_database($username)
   {		
-        $statement = $connection->prepare('select * from user where userName = ?');
-        $statement->bind_param('s', $username);
-        $statement->execute();
+        global $connection;
+        $stmt = "SELECT userName FROM user where userName = '".$username."'";
+       
         
-        if($statement)
+        
+        if($result = mysqli_query($connection,$stmt))
         {
-            $statement->store_result();
-            return $statement->num_rows;
+			
+            
+                while($row = $result->fetch_row())
+                {
+                     if($row[0] == $username)
+                     {
+						 return true;
+                     }
+                }
+            
+			
+
         }
-        else
+        return false;
+
+        
+
+        /*
+        if($result->num_rows >= 1)
         {
+            echo "Email or Username already exist, try something else.";
+            return 1;
+        } 
+        else 
+        {
+            echo "Username is unqiue!";
             return 0;
         }
-}
+*/
+    }
 
   function generateSalt(){
       $str = "";
