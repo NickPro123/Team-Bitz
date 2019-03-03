@@ -1,0 +1,7 @@
+1. In Github, go to the location where the file you want to change is.
+
+2. Drag and drop the file into your browser.
+
+3. Make sure in the "Commit changes" section that "Commit directly to the master branch" is selected.
+
+4. Click "Commit changes".
