@@ -25,25 +25,26 @@ $result = queryMysql("select * from patient")
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html">Home</a>
+                </li>
                 <li class="nav-item active">
-                    <a class="nav-link" href="index.html">Home <span class="sr-only">(current)</span></a>
+                    <a class="nav-link" href="main.php">Main Menu<span class="sr-only">(current)</span></a>
                 </li>
             </ul>
             <!--Logout Button-->
             <div class="form-inline my-2 my-lg-0">
-            <form method='post' action='logout.php' onsubmit='return true'>
-                <input type='submit' value='Logout'>
+                <form method='post' action='logout.php' onsubmit='return true'>
+                    <button type="submit" class="btn btn-outline-success ">Log Out</button>
+                </form>
             </div>
         </div>
     </nav>
     <header>
         <img src="images/logo.png" class="logo">
     </header>
-    <div class="container-fluid">
-        <div class="mx-auto">
-
-
-
+    <div class="container">
+        <div class="center">
           <h1>Main Menu</h1>
 
          <!-- <//?php $result = queryMysql("select * from patient");?>-->
@@ -51,22 +52,22 @@ $result = queryMysql("select * from patient")
       {
           ?>
 
-          <table border = '1'>
-      <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Room Number</th>
-      </tr>
+          <table class="table table-striped">
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Room Number</th>
+              </tr>
         <?php
         while ($row = mysqli_fetch_assoc($result)){
             ?>
-        <tr>
-            <td><?php echo "$row[patientID]";?></td>
-            <td><?php echo "$row[firstName] $row[lastName]"; ?></td>
-            <td><?php echo "$row[roomNumber]";?></td>
-        </tr>
+              <tr>
+                <td><?php echo "$row[patientID]";?></td>
+                <td><?php echo "$row[firstName] $row[lastName]"; ?></td>
+                <td><?php echo "$row[roomNumber]";?></td>
+              </tr>
             <?php ; } ?>
-      </table>
+          </table>
         </div>
       <!--}else{
          echo "There is no data to be displayed please <a href='main.php'>add</a> some.";
