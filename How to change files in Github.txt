@@ -1,4 +1,4 @@
-1. In Github, go to the location where the file you want to change is.
+1. In Github, go to the location where the file you want to change is. Make sure you are in the "DanielleAlloy/Team-Bitz" repo.
 
 2. Drag and drop the file into your browser.
 
