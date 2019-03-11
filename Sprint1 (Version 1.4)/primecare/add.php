@@ -1,7 +1,5 @@
 <?php 
-// I certify that this submission is my own original work
-//Joseph Mineo
-//R01581419
+
 session_start();
 require_once 'functions.php';
 

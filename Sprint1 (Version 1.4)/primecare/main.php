@@ -68,6 +68,9 @@ $result = queryMysql("select * from patient")
               </tr>
             <?php ; } ?>
           </table>
+          <form method='post' action='addpatient.php' onsubmit='return true'>                       
+                    <button type="submit" class="btn btn-outline-success ">Add Patient</button>     
+                </form>                                                                             
         </div>
       <!--}else{
          echo "There is no data to be displayed please <a href='main.php'>add</a> some.";

@@ -12,13 +12,40 @@
     require_once 'functions.php';
  
   if (isset($_POST['firstName']))
+  {
     $firstName = fix_string($_POST['firstName']);
-      if (isset($_POST['lastName']))
-    $lastName    = fix_string($_POST['lastName']);
+	$firstName = sanitizeString($firstName);
+  }
+	
+  if (isset($_POST['lastName']))
+  {
+    $lastName = fix_string($_POST['lastName']);
+	$lastName = sanitizeString($lastName);
+  }
+	
   if (isset($_POST['password']))
+  {
     $password = fix_string($_POST['password']);
+	$password = sanitizeString($password);
+  }
+	
   if (isset($_POST['confirmPass']))
+  {
     $confirmPass = fix_string($_POST['confirmPass']);
+  	$confirmPass = sanitizeString($confirmPass);
+  }
+	
+  if(isset($_POST['type']))
+  {
+	$type = fix_string($_POST['type']);
+	$type = sanitizeString($type);
+  }
+	
+  if(isset($_POST['dept']))
+  {
+	$dept = fix_string($_POST['dept']);
+    $dept = sanitizeString($dept);
+  }
 
  
 //  $fail = validate_username($firstName);
@@ -42,7 +69,8 @@
     
     
     
-    add_user($connection, $firstName, $lastName, "", NULL, $hash, $salt1, $salt2, $username );
+    add_user($connection, $firstName, $lastName, $type, $dept, $hash, $salt1, $salt2, $username );
+	
 
     //ADD CODE TO DISPLAY USERS GENERATED USERNAME HERE
     
