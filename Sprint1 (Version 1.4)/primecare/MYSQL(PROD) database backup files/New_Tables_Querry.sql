@@ -1,3 +1,11 @@
+-- Create prescriptionassignedtopatient table
+create table prescriptionassignedtopatient(
+doctorOrderNumber	int not null,
+patientID	int	not null
+constraint prescriptionassignedtopatient_doctorOrderNumber_FK foreign key(doctorOrderNumber) references prescription(doctorOrderNumber) on update no action on delete no action,
+constraint prescriptionassignedtopatient_patientID_FK foreign key(patientID) references patient(patientID) on update no action on delete no action
+);
+
 -- Creates treatment table
 CREATE table treatment(
 treatmentID	int	primary key	not null auto_increment,
@@ -31,6 +39,11 @@ primary key(patientID,testID),
 constraint patientassignedtotest_patientID_FK foreign key(patientID) references patient(patientID) on update no action on delete no action,
 constraint patientassignedtotest_testID_FK foreign key(testID) references test(testID) on update no action on delete no action
 );
+
+-- Fills prescriptionassignedtopatient table with data
+insert into prescriptionassignedtopatient(doctorOrderNumber,patientID) VALUES
+(1,1),
+(2,2);
 
 -- Fills treatment table with data
 insert into treatment(treatmentName,recommendedAmount) VALUES
