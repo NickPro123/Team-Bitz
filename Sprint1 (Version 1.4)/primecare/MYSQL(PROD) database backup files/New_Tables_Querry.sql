@@ -4,7 +4,7 @@ treatmentID	int	primary key	not null auto_increment,
 treatmentName	varchar(100)	not null,
 recommendedAmount	decimal(20,1)	not null
 );
-ALTER TABLE TREATMENT auto_increment = 1;
+ALTER TABLE treatment auto_increment = 1;
 
 -- Creates PatientAssignedToTreatment table
 create table patientassignedtotreatment(
