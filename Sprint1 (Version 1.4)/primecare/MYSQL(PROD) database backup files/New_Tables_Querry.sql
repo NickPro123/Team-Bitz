@@ -11,8 +11,8 @@ create table patientassignedtotreatment(
 patientID	int not null,
 treatmentID	int not null,
 primary key(patientID,treatmentID),
-constraint FK_patientID foreign key(patientID) references patient(patientID) on update no action on delete no action,
-constraint FK_treatmentID	foreign key(treatmentID) references treatment(treatmentID) on update no action on delete no action
+constraint patientassignedtotreatment_patientID_FK foreign key(patientID) references patient(patientID) on update no action on delete no action,
+constraint patientassignedtotreatment_treatmentID_FK	foreign key(treatmentID) references treatment(treatmentID) on update no action on delete no action
 );
 
 -- Creates Test table
@@ -28,8 +28,8 @@ create table patientassignedtotest(
 patientID	int not null,
 testID	int	not null,
 primary key(patientID,testID),
-constraint FK_patientID foreign key(patientID) references patient(patientID) on update no action on delete no action,
-constraint FK_testID foreign key(testID) references test(testID) on update no action on delete no action
+constraint patientassignedtotest_patientID_FK foreign key(patientID) references patient(patientID) on update no action on delete no action,
+constraint patientassignedtotest_testID_FK foreign key(testID) references test(testID) on update no action on delete no action
 );
 
 -- Fills treatment table with data
