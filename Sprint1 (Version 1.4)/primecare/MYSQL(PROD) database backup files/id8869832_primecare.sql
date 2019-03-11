@@ -1,11 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 4.8.5
+-- version 4.8.4
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost:3306
--- Generation Time: Mar 03, 2019 at 07:28 PM
--- Server version: 10.3.13-MariaDB
--- PHP Version: 7.3.2
+-- Server version: 5.7.24
+-- PHP Version: 7.2.14
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET AUTOCOMMIT = 0;
@@ -28,10 +26,12 @@ SET time_zone = "+00:00";
 -- Table structure for table `department`
 --
 
-CREATE TABLE `department` (
-  `departmentID` int(11) NOT NULL,
-  `departmentName` varchar(35) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+DROP TABLE IF EXISTS `department`;
+CREATE TABLE IF NOT EXISTS `department` (
+  `departmentID` int(11) NOT NULL AUTO_INCREMENT,
+  `departmentName` varchar(35) NOT NULL,
+  PRIMARY KEY (`departmentID`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `department`
@@ -57,9 +57,12 @@ INSERT INTO `department` (`departmentID`, `departmentName`) VALUES
 -- Table structure for table `doctorassignedtopatient`
 --
 
-CREATE TABLE `doctorassignedtopatient` (
+DROP TABLE IF EXISTS `doctorassignedtopatient`;
+CREATE TABLE IF NOT EXISTS `doctorassignedtopatient` (
   `patientID` int(11) NOT NULL,
-  `userID` int(11) NOT NULL
+  `userID` int(11) NOT NULL,
+  PRIMARY KEY (`patientID`,`userID`),
+  KEY `FK_userID` (`userID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -68,22 +71,24 @@ CREATE TABLE `doctorassignedtopatient` (
 -- Table structure for table `drug`
 --
 
-CREATE TABLE `drug` (
-  `drugID` int(11) NOT NULL,
+DROP TABLE IF EXISTS `drug`;
+CREATE TABLE IF NOT EXISTS `drug` (
+  `drugID` int(11) NOT NULL AUTO_INCREMENT,
   `medicineName` varchar(35) NOT NULL,
   `amountRemaining` int(11) NOT NULL,
   `dose` decimal(20,1) NOT NULL,
   `warning` varchar(200) NOT NULL,
-  `description` varchar(200) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  `description` varchar(200) NOT NULL,
+  PRIMARY KEY (`drugID`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `drug`
 --
 
 INSERT INTO `drug` (`drugID`, `medicineName`, `amountRemaining`, `dose`, `warning`, `description`) VALUES
-(1, 'first medicine', 4, 0.7, 'First warning', 'This is medicine #1'),
-(2, 'second medicine', 5, 0.8, 'second warning', 'This is medicine #2');
+(1, 'first medicine', 4, '0.7', 'First warning', 'This is medicine #1'),
+(2, 'second medicine', 5, '0.8', 'second warning', 'This is medicine #2');
 
 -- --------------------------------------------------------
 
@@ -91,12 +96,15 @@ INSERT INTO `drug` (`drugID`, `medicineName`, `amountRemaining`, `dose`, `warnin
 -- Table structure for table `patient`
 --
 
-CREATE TABLE `patient` (
-  `patientID` int(11) NOT NULL,
+DROP TABLE IF EXISTS `patient`;
+CREATE TABLE IF NOT EXISTS `patient` (
+  `patientID` int(11) NOT NULL AUTO_INCREMENT,
   `firstName` varchar(35) NOT NULL,
   `lastName` varchar(35) NOT NULL,
-  `roomNumber` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  `roomNumber` int(11) NOT NULL,
+  PRIMARY KEY (`patientID`),
+  KEY `FK_roomNumber` (`roomNumber`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `patient`
@@ -111,6 +119,7 @@ INSERT INTO `patient` (`patientID`, `firstName`, `lastName`, `roomNumber`) VALUE
 --
 -- Triggers `patient`
 --
+DROP TRIGGER IF EXISTS `tPatientRoom`;
 DELIMITER $$
 CREATE TRIGGER `tPatientRoom` AFTER INSERT ON `patient` FOR EACH ROW UPDATE room
 SET patientsAssigned = patientsAssigned + 1
@@ -121,13 +130,60 @@ DELIMITER ;
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `patientassignedtotest`
+--
+
+DROP TABLE IF EXISTS `patientassignedtotest`;
+CREATE TABLE IF NOT EXISTS `patientassignedtotest` (
+  `patientID` int(11) NOT NULL,
+  `testID` int(11) NOT NULL,
+  PRIMARY KEY (`patientID`,`testID`),
+  KEY `FK_testID` (`testID`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `patientassignedtotest`
+--
+
+INSERT INTO `patientassignedtotest` (`patientID`, `testID`) VALUES
+(1, 1),
+(2, 2);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `patientassignedtotreatment`
+--
+
+DROP TABLE IF EXISTS `patientassignedtotreatment`;
+CREATE TABLE IF NOT EXISTS `patientassignedtotreatment` (
+  `patientID` int(11) NOT NULL,
+  `treatmentID` int(11) NOT NULL,
+  PRIMARY KEY (`patientID`,`treatmentID`),
+  KEY `FK_treatmentID` (`treatmentID`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `patientassignedtotreatment`
+--
+
+INSERT INTO `patientassignedtotreatment` (`patientID`, `treatmentID`) VALUES
+(1, 1),
+(2, 2);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `prescription`
 --
 
-CREATE TABLE `prescription` (
+DROP TABLE IF EXISTS `prescription`;
+CREATE TABLE IF NOT EXISTS `prescription` (
   `doctorOrderNumber` int(11) NOT NULL,
   `orderDetails` varchar(200) NOT NULL,
-  `drugID` int(11) NOT NULL
+  `drugID` int(11) NOT NULL,
+  PRIMARY KEY (`doctorOrderNumber`),
+  KEY `FK_drugID` (`drugID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
@@ -144,13 +200,16 @@ INSERT INTO `prescription` (`doctorOrderNumber`, `orderDetails`, `drugID`) VALUE
 -- Table structure for table `room`
 --
 
-CREATE TABLE `room` (
-  `roomNumber` int(11) NOT NULL,
+DROP TABLE IF EXISTS `room`;
+CREATE TABLE IF NOT EXISTS `room` (
+  `roomNumber` int(11) NOT NULL AUTO_INCREMENT,
   `departmentID` int(11) NOT NULL,
   `description` varchar(200) NOT NULL,
   `maxCapacity` int(11) NOT NULL,
-  `patientsAssigned` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  `patientsAssigned` int(11) DEFAULT NULL,
+  PRIMARY KEY (`roomNumber`),
+  KEY `FK_deptID` (`departmentID`)
+) ENGINE=InnoDB AUTO_INCREMENT=345 DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `room`
@@ -234,11 +293,56 @@ INSERT INTO `room` (`roomNumber`, `departmentID`, `description`, `maxCapacity`, 
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `test`
+--
+
+DROP TABLE IF EXISTS `test`;
+CREATE TABLE IF NOT EXISTS `test` (
+  `testID` int(11) NOT NULL AUTO_INCREMENT,
+  `testName` varchar(100) NOT NULL,
+  `testResult` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`testID`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `test`
+--
+
+INSERT INTO `test` (`testID`, `testName`, `testResult`) VALUES
+(1, 'Test1', 'Healthy'),
+(2, 'Test2', 'Cancer');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `treatment`
+--
+
+DROP TABLE IF EXISTS `treatment`;
+CREATE TABLE IF NOT EXISTS `treatment` (
+  `treatmentID` int(11) NOT NULL AUTO_INCREMENT,
+  `treatmentName` varchar(100) NOT NULL,
+  `recommendedAmount` decimal(20,1) NOT NULL,
+  PRIMARY KEY (`treatmentID`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `treatment`
+--
+
+INSERT INTO `treatment` (`treatmentID`, `treatmentName`, `recommendedAmount`) VALUES
+(1, 'treatment1', '1.5'),
+(2, 'treatment2', '2.5');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `user`
 --
 
-CREATE TABLE `user` (
-  `userID` int(11) NOT NULL,
+DROP TABLE IF EXISTS `user`;
+CREATE TABLE IF NOT EXISTS `user` (
+  `userID` int(11) NOT NULL AUTO_INCREMENT,
   `firstName` varchar(50) NOT NULL,
   `lastName` varchar(100) NOT NULL,
   `type` varchar(25) DEFAULT NULL,
@@ -246,8 +350,9 @@ CREATE TABLE `user` (
   `password` varchar(100) NOT NULL,
   `salt1` varchar(100) NOT NULL,
   `salt2` varchar(100) NOT NULL,
-  `userName` varchar(35) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  `userName` varchar(35) NOT NULL,
+  PRIMARY KEY (`userID`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `user`
@@ -260,90 +365,6 @@ INSERT INTO `user` (`userID`, `firstName`, `lastName`, `type`, `departmentID`, `
 (5, 'Danielle', 'Hyland', '', NULL, 'cc5cfe699fb67af71860e72ae48eb719', 'VPCyJLlDxO', 'YhxwfSEQxX', 'hylad7'),
 (6, 'Danielle', 'Hyland', '', NULL, 'e8cd6cd17d1ed854d0c7201f7f444139', 'UxpmSKVTbL', 'ThZDPoMXtJ', 'hylad8'),
 (7, 'John', 'Smith', '', NULL, 'b8f2fffa90e0d1e62660fd3f9cb427c3', 'gTRNxDhAnD', 'qWMePeurTK', 'smitj4');
-
---
--- Indexes for dumped tables
---
-
---
--- Indexes for table `department`
---
-ALTER TABLE `department`
-  ADD PRIMARY KEY (`departmentID`);
-
---
--- Indexes for table `doctorassignedtopatient`
---
-ALTER TABLE `doctorassignedtopatient`
-  ADD PRIMARY KEY (`patientID`,`userID`),
-  ADD KEY `FK_userID` (`userID`);
-
---
--- Indexes for table `drug`
---
-ALTER TABLE `drug`
-  ADD PRIMARY KEY (`drugID`);
-
---
--- Indexes for table `patient`
---
-ALTER TABLE `patient`
-  ADD PRIMARY KEY (`patientID`),
-  ADD KEY `FK_roomNumber` (`roomNumber`);
-
---
--- Indexes for table `prescription`
---
-ALTER TABLE `prescription`
-  ADD PRIMARY KEY (`doctorOrderNumber`),
-  ADD KEY `FK_drugID` (`drugID`);
-
---
--- Indexes for table `room`
---
-ALTER TABLE `room`
-  ADD PRIMARY KEY (`roomNumber`),
-  ADD KEY `FK_deptID` (`departmentID`);
-
---
--- Indexes for table `user`
---
-ALTER TABLE `user`
-  ADD PRIMARY KEY (`userID`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `department`
---
-ALTER TABLE `department`
-  MODIFY `departmentID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
-
---
--- AUTO_INCREMENT for table `drug`
---
-ALTER TABLE `drug`
-  MODIFY `drugID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `patient`
---
-ALTER TABLE `patient`
-  MODIFY `patientID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
-
---
--- AUTO_INCREMENT for table `room`
---
-ALTER TABLE `room`
-  MODIFY `roomNumber` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=345;
-
---
--- AUTO_INCREMENT for table `user`
---
-ALTER TABLE `user`
-  MODIFY `userID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- Constraints for dumped tables
