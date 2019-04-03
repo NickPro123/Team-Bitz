@@ -1,5 +1,11 @@
 html{
     font-family: 'Lato', sans-serif;
+    position: relative;
+    min-height: 100%;
+}
+
+body{
+    padding-bottom: 65px;
 }
 /* Centers and styles the signUp Form*/
 .signUp{
@@ -35,10 +41,12 @@ html{
 h1{
     font-family: 'Raleway', sans-serif;
     font-weight: 900!important;
+    margin-bottom: 10px;
 }
 h2{
     font-family: 'Raleway', sans-serif!important;
     font-weight: 700!important;
+    text-align: center;
 }
 h3{
     text-align:center;
@@ -118,12 +126,95 @@ button:hover {
     text-align:center;
     background-color: #45a049;
     color: white;
+    margin-top: 15px;
     padding: 5px;
     font-size: 2em;
     font-family: 'Raleway', sans-serif!important;
     font-weight: 700!important;
 }
 
+.popup_header{
+	text-align: center;
+	margin-top: 10px;
+    margin-bottom: 25px;
+    font-size: 1.5em;
+    font-family: 'Raleway', sans-serif!important;
+    font-weight: 700!important;
+}
+
+#popup_bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: rgba(0,0,0,0.7);
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+#popup_history_bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: rgba(0,0,0,0.7);
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+.popup_main_div{
+    position: fixed;
+    width: 800px;
+    height: auto;
+    padding: 15px;
+    border: 2px solid black;
+    border-radius: 5px;
+    left: 50%;
+    margin-left: -400px;
+    top: 50%;
+    margin-top: -250px;
+    background-color: white;
+}
+
+#close_popup_div{
+    position:absolute;
+    width: 25px;
+    height: 25px;
+    border-radius: 25px;
+    border: 2px solid black;
+    text-align: center;
+    right: 5px;
+    top: 5px;
+}
+
+#close_popup_div p{
+    margin-top: 0;
+    cursor: pointer;
+}
+
+#editBtn{
+    height: 25px;
+    width: auto;
+    float: right;
+}
+
+#editHistoryBtn{
+    height: 25px;
+    width: auto;
+    float: right;
+}
+
 table {
      border-collapse: collapse;
  }
+
+.footer {
+    position: fixed;
+    color: #fff;
+    font-size: .75em;
+    bottom: 0;
+    width: 100%;
+    height: 60px; /* Set the fixed height of the footer here */
+    line-height: 60px; /* Vertically center the text there */
+    background-color: #4CAF50;
+}

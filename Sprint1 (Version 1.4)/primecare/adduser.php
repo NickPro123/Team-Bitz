@@ -1,13 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <link rel='stylesheet' type='text/css' href='css/style.css'>
-    <title>Prime Health Care - Your User Name Is</title>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Lato|Raleway:400,700,900" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Prime Health Care - Welcome</title>
 </head>
+
+<!--Navbar-->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="index.html">Prime Care</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="index.html"><span class="sr-only">(current)</span></a>
+            </li>
+        </ul>
+        <div class="form-inline my-2 my-lg-0">
+            <a href="login.php">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="button">Log In</button>
+            </a>
+        </div>
+        <div class="form-inline my-2 ml-lg-2">
+            <a href="Signup.php">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="button">Sign Up</button>
+            </a>
+        </div>
+    </div>
+</nav>
+
 <header>
-    <img src="images/logo.png" class="logo" alt="HealthCare Logo">
+    <img src="images/logo.png" class="logo">
 </header>
 <body>
+<div class="container">
+    <div class ="formHeader"><h2>Welcome to Prime Care!</h2></div>
+    <div class="form">
+
+
+
     <?php
     require_once 'functions.php';
  
@@ -74,11 +109,8 @@
 
     //ADD CODE TO DISPLAY USERS GENERATED USERNAME HERE
     
-    echo " 
-        <div>
-            <p>Your username is $username</p>
-            <a href='login.php'><button type='button'>Log In</button></a>
-        </div>";
+    echo "<h3>Your username is $username</h3><div class='center'>
+            <a href='login.php'><button type='button' class='btn btn-outline-success center'>Log In</button></a></div>";
    
   }
 
@@ -135,10 +167,6 @@ function create_username($firstName, $lastName,  $sec_no = 0)
     }
 }
 
-
-
-
-
   function validate_password($field)
   {
     if ($field == "") return "No Password was entered<br>";
@@ -174,5 +202,16 @@ function create_username($firstName, $lastName,  $sec_no = 0)
     return htmlentities ($string);
   }
 ?>
+
+<!-- Optional JavaScript -->
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    </div>
+</div>
 </body>
+<footer class="footer">
+    <div class="container-fluid">
+    </div>
+</footer>
 </html>

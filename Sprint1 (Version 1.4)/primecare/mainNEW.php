@@ -1,0 +1,470 @@
+<?php
+
+
+
+session_start();
+
+require_once 'functions.php';
+
+if(!isset($_SESSION['user'])){
+
+    header("Location:login.php");
+
+}
+
+$result = queryMysql("select * from patient")
+
+?>
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+    <head>
+
+        <link rel="stylesheet" type="text/css" href="css/style.css">
+
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+
+        <link href="https://fonts.googleapis.com/css?family=Lato|Raleway:400,700,900" rel="stylesheet">
+
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <title>Prime Health Care - Welcome</title>
+
+    </head>
+
+    <!--Navbar-->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="index.html">Prime Care</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="main.php">Main Menu<span class="sr-only">(current)</span></a>
+                </li>
+            </ul>
+
+            <div class="form-inline my-2 ml-lg-2">
+                <form method='post' action='logout.php' onsubmit='return true'>
+                    <button type="submit" class="btn btn-outline-success ">Log Out</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+
+
+
+
+
+    <header>
+
+        <img src="images/logo.png" class="logo">
+
+    </header>
+
+
+<body>
+    <div class="container">
+
+        <div class="center">
+
+          <h1>Main Menu</h1>
+
+         <!-- <//?php $result = queryMysql("select * from patient");?>-->
+
+      <?php if ($result->num_rows > 0)
+
+      {
+
+          ?>
+
+
+
+          <table class="table table-striped">
+
+              <tr>
+
+                <th>ID</th>
+
+                <th>Name</th>
+
+                <th>Room Number</th>
+                  <th></th>
+
+
+              </tr>
+
+        <?php
+		
+		$tableIndex = 1;
+	
+        while ($row = mysqli_fetch_assoc($result)){
+			
+			
+
+            ?>
+			
+              <tr>
+
+                <td><input type='hidden' id="patientID<?php echo $tableIndex ?>" value="<?php echo $row['patientID'] ?>"> <?php echo "$row[patientID]";?> </td>
+
+
+                <td>
+					 <input type='hidden' id="patientFName<?php echo $tableIndex ?>" value="<?php echo "$row[firstName]"; ?>" ><?php echo "$row[firstName] ";?>
+				 	 <input type='hidden' id="patientLName<?php echo $tableIndex ?>" value="<?php echo "$row[lastName]"; ?>" ><?php echo "$row[lastName]";?>
+				</td>
+
+                <td><input type='hidden' id="patientRm<?php echo $tableIndex ?>" value="<?php echo "$row[roomNumber]"; ?>"><?php echo "$row[roomNumber]";?></td>
+
+                  <td><button onclick="openPopupMenu(<?php echo $tableIndex ?>)" class="btn btn-outline-success">Details</button>
+                  <button onclick="openHistoryPopupMenu(<?php echo $tableIndex ?>)" class="btn btn-outline-success">History</button></td>
+
+
+              </tr>
+			
+            <?php ; $tableIndex++; } ?>
+
+          </table>
+
+          <form method='post' action='addpatient.php' onsubmit='return true'>                       
+
+                    <button type="submit" class="btn btn-outline-success ">Add Patient</button>     
+
+                </form>                                                                             
+
+        </div>
+    </div>
+
+            <!--Patient Details Popup-->
+            <div id="popup_bg">
+
+                <div class="popup_main_div">
+
+
+                    <div class="popup_header">Patient Detail
+                    </div>
+
+                    <div class="popup_main">
+                        <form>
+
+                            <div class="form-row">
+                                <div class="col">
+                                    ID: <br>
+                                    <input type="text" id="detailPatientID" name="detailPatientID" readonly="readonly">
+                                </div>
+                                <div class="col">
+                                    First Name: <br>
+                                    <input type="text" id="detailPatientFName" name="detailPatientFName" readonly="readonly"><br>
+                                </div>
+                                <div class="col">
+                                    Last Name: <br>
+                                    <input type="text" id="detailPatientLName" name="detailPatientLName" readonly="readonly"><br>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="col">
+                                    Room Number:<br>
+                                    <input type="text" id="detailPatientRm" name="detailPatientRoom" readonly="readonly"><br>
+                                </div>
+                            </div>
+                        </form>
+
+
+
+                        <img id= "editBtn" src="images/edit_mode.png" style="cursor: pointer; max-width: 50px; max-height: 50px; margin-left:10px; margin-top: 10px;" onClick="enableEditMode();" >
+
+                        <button id = "saveBtn" onClick="saveChanges();">Save Changes</button>
+                        <a id="successMessage"></a>
+                    </div>
+
+                    <div id="close_popup_div" onclick="closePopupMenu()">
+                        <p title="Close Detail Menu" >
+                            X
+                        </p>
+                    </div>
+
+                </div>
+
+        </div>
+
+    <!--Patient History-->
+    <div id="popup_history_bg">
+        <div class="popup_main_div">
+            <div class="popup_header">Patient History</div>
+            <div class="popup_main">
+                <table class="table table-striped">
+                    <tr>
+                        <th>Date</th>
+                        <th>Treatment</th>
+                    </tr>
+                    <tr>
+                        <td>
+                        </td>
+                    </tr>
+
+                </table>
+                <img id = "editHistoryBtn" src="images/edit_mode.png" style="cursor: pointer; max-width: 50px; max-height: 50px; margin-left:10px; margin-top: 10px;" onClick="enableHistoryEditMode();" >
+                <button id = "saveHistoryBtn" onClick="saveHistoryChanges();">Save Changes</button>
+                <a id="successMessage"></a>
+            </div>
+
+            <div id="close_popup_div" onclick="closeHistoryPopupMenu()">
+                <p title="Close Detail Menu" >
+                    X
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+        <!-- Scripting to display and hide patient detail popup menu -->
+
+    <script type="text/javascript">
+
+        var popup = document.getElementById("popup_bg");
+        var historyPopup = document.getElementById("popup_history_bg");
+
+
+        var IDMenuItem = document.getElementById("detailPatientID");
+		var fNameMenuItem = document.getElementById("detailPatientFName");
+		var lNameMenuItem = document.getElementById("detailPatientLName");
+		var roomMenuItem = document.getElementById("detailPatientRm");
+
+        var patientIDHistoryItem = document.getElementById("patientIDHistory");
+        var fNameHistoryItem = document.getElementById("detailPatientFName");
+        var lNameHistoryItem = document.getElementById("detailPatientLName");
+        var roomHistoryItem = document.getElementById("detailPatientRm");
+
+		var isEditing = false;
+		var patientID;
+		var saveBtn = document.getElementById("saveBtn");
+        var saveHistoryBtn = document.getElementById("saveHistoryBtn");
+		var successMsg = document.getElementById("successMessage");
+		
+
+		/*Patient Details*/
+	    function openPopupMenu(index)
+
+        {
+            popup.style.display="block";
+			
+			saveBtn.style.visibility= 'hidden';
+			
+			
+			displayPatientDetails(index);
+			
+        }
+
+        function displayPatientDetails(index)
+		{
+			var IDIndex = "patientID" + index +"";
+			var fNameIndex = "patientFName" + index + "";
+			var lNameIndex = "patientLName" + index + "";
+			var roomIndex = "patientRm" + index + "";
+			
+			patientID = document.getElementById(IDIndex);
+			var patientFName = document.getElementById(fNameIndex);
+			var patientLName = document.getElementById(lNameIndex);
+			var patientRm = document.getElementById(roomIndex);
+						
+			IDMenuItem.value = patientID.value;
+			fNameMenuItem.value = patientFName.value;
+			lNameMenuItem.value = patientLName.value;
+			roomMenuItem.value = patientRm.value;
+			
+		}
+
+        function closePopupMenu()
+
+        {
+            disableEditMode();
+            popup.style.display = "none";
+            successMsg.innerHTML = "";
+
+        }
+
+
+        function enableEditMode()
+        {
+            if(!isEditing)
+            {
+                editBtn.src = "images/enable_edit_mode.png";
+                saveBtn.style.visibility = 'visible';
+                fNameMenuItem.readOnly = false;
+                lNameMenuItem.readOnly = false;
+                roomMenuItem.readOnly = false;
+                successMsg.innerHTML = "";
+                isEditing = true;
+            }
+            else
+            {
+                disableEditMode();
+            }
+        }
+
+        function disableEditMode()
+        {
+            if(isEditing)
+            {
+                editBtn.src = "images/edit_mode.png";
+                saveBtn.style.visibility = 'hidden';
+                fNameMenuItem.readOnly = true;
+                lNameMenuItem.readOnly = true;
+                roomMenuItem.readOnly = true;
+                isEditing = false;
+            }
+        }
+
+        function saveChanges()
+        {
+            if(isEditing)
+            {
+                disableEditMode();
+
+                var newPatientFName;
+                var newPatientLName;
+                var newPatientRoom;
+
+                newPatientFName = fNameMenuItem.value;
+                newPatientLName = lNameMenuItem.value;
+                newPatientRoom = roomMenuItem.value;
+
+                //<?php //updatePatientRecord( ?> patientID.value <?php //, ?> newPatientFName.value <?php// , ?> newPatientLName.value <?php// , ?> newPatientRoom.value <?php //) ?>
+
+
+                successMsg.innerHTML = "Changes Saved!";
+                closePopupMenu();
+            }
+        }
+
+
+        /*Patient History*/
+
+        function openHistoryPopupMenu(index)
+
+        {
+            historyPopup.style.display="block";
+
+            saveHistoryBtn.style.visibility= 'hidden';
+
+
+            displayPatientHistory(index);
+
+        }
+
+        function displayPatientHistory(index)
+        {
+            var patientIDHistoryIndex = "patientID" + index +"";
+            var patientFNameHistoryIndex = "patientFName" + index + "";
+            var lNameIndex = "patientLName" + index + "";
+            var roomIndex = "patientRm" + index + "";
+
+            patientIDHistory = document.getElementById(patientIDHistoryIndex);
+            var patientFNameHistory = document.getElementById(patientFNameHistoryIndex);
+            var patientLNameHistory = document.getElementById(lNameIndex);
+            var patientRmHistory = document.getElementById(roomIndex);
+
+            patientIDHistoryItem.value = patientID.value;
+            fNameHistoryItem.value = patientFNameHistory.value;
+            lNameHistoryItem.value = patientLNameHistory.value;
+            roomHistoryItem.value = patientRmHistory.value;
+
+        }
+
+        function enableHistoryEditMode()
+        {
+            if(!isEditing)
+            {
+                editHistoryBtn.src = "images/enable_edit_mode.png";
+                saveHistoryBtn.style.visibility = 'visible';
+                fNameMenuItem.readOnly = false;
+                lNameMenuItem.readOnly = false;
+                roomMenuItem.readOnly = false;
+                successMsg.innerHTML = "";
+                isEditing = true;
+            }
+            else
+            {
+                disableHistoryEditMode();
+            }
+        }
+
+        function disableHistoryEditMode()
+        {
+            if(isEditing)
+            {
+                editHistoryBtn.src = "images/edit_mode.png";
+                saveHistoryBtn.style.visibility = 'hidden';
+                fNameMenuItem.readOnly = true;
+                lNameMenuItem.readOnly = true;
+                roomMenuItem.readOnly = true;
+                isEditing = false;
+            }
+        }
+
+        function closeHistoryPopupMenu()
+
+        {
+            disableEditMode();
+            historyPopup.style.display = "none";
+            successMsg.innerHTML = "";
+
+        }
+
+
+        function saveHistoryChanges()
+        {
+            if(isEditing)
+            {
+                disableEditMode();
+
+                var newPatientFName;
+                var newPatientLName;
+                var newPatientRoom;
+
+                newPatientFName = fNameMenuItem.value;
+                newPatientLName = lNameMenuItem.value;
+                newPatientRoom = roomMenuItem.value;
+
+                //<?php //updatePatientRecord( ?> patientID.value <?php //, ?> newPatientFName.value <?php// , ?> newPatientLName.value <?php// , ?> newPatientRoom.value <?php //) ?>
+
+
+                successMsg.innerHTML = "Changes Saved!";
+                closePopupMenu();
+            }
+        }
+
+    </script>
+
+      <!--}else{
+
+         echo "There is no data to be displayed please <a href='main.php'>add</a> some.";
+
+      }-->
+
+<?php } ?>
+
+
+
+        <!-- Optional JavaScript -->
+
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+    </div>
+    </div>
+</body>
+
+    <footer class="footer">
+        <div class="container-fluid"> Logged in as: <?php echo "$firstName + $lastName";?>
+        </div>
+    </footer>
+
+</html>

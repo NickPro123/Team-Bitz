@@ -25,9 +25,9 @@ if (isset($_POST['firstName'])){
         $error = "Not all fields were entered<br>";
     else{
        // echo "$first, $last, $rmnumber";
-       // $stmt = $connection->prepare('call spAddPatient(?,?,?)');		
+        $stmt = $connection->prepare('call spAddPatient(?,?,?)');		
 	   // $stmt->bind_param('ssi', $first, $last, $rmnumber);		
-	   $stmt = $connection->prepare('insert into patient(firstName, lastName, roomNumber) values(?,?,?)');		
+	 //  $stmt = $connection->prepare('insert into patient(firstName, lastName, roomNumber) values(?,?,?)');		
 	   $stmt->bind_param('ssi',$first, $last, $rmnumber);
         $stmt->execute();
          if (!$stmt) {
