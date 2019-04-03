@@ -8,7 +8,16 @@ require_once 'functions.php';
 
 if (!empty($_SESSION['user']))
   {
-  $result = queryMysql("select * from video_game");
+
+echo "
+    <link rel='stylesheet' type='text/css' href='css/style.css'>
+    
+  <header>
+      <img src='images/logo.png' class='logo'>
+  </header>
+    <body>
+      <th colspan='2' align='center'>Main Menu</th>
+      $result = queryMysql("select * from patient");
   if ($result->num_rows > 0)
   {
       echo "<style>
@@ -20,19 +29,14 @@ if (!empty($_SESSION['user']))
       
       <table border = '1'>
   <tr>
-    <th>Title</th>
-    <th>System</th> 
-    <th>Company</th>
-    <th>Genre</th>
-    <th>Year</th>
+    <th>Name</th>
+    <th>Room Number</th> 
+    
   </tr>";
     while ($row = mysqli_fetch_assoc($result)){
     echo "<tr>
-    <th>".$row["title"]."</th>
-    <th>".$row["system"]."</th> 
-    <th>".$row["company"]."</th>
-    <th>".$row["genre"]."</th>
-    <th>".$row["year"]."</th>
+    <th>".$row["firstName"].$row["lastName"]"</th>
+    <th>".$row["roomNumber"]."</th> 
   </tr>";
             
     }
@@ -44,16 +48,19 @@ echo "</table>
 
       
     </table>
-";
+      </form>
+            <form method='post' action='logout.php' onsubmit='return true'>
+        <tr><td colspan='2' align='center'><input type='submit' value='Logout'></td></tr>
 
-
+      
+    </table>
+  </body>";
+  
   }else{
-     echo "There is no data to be displayed please <a href='main.php'>add</a> some.";
-
-  }
- }else{
   echo "You are not logged in
   <a href='Signup.html'>click here</a> to refresh the screen.";
   }
-  
-  ?>
+?>
+
+    
+</html>

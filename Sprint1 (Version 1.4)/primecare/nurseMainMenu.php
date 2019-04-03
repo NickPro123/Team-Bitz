@@ -4,25 +4,7 @@ require_once 'functions.php';
 if(!isset($_SESSION['user'])){
     header("Location:login.php");
 }
-if(isset($_POST['showInactive']))
-{
-	if($_POST['showInactive'] == "Show Inactive Patients")
-	{
-		$result = queryMysql("select * from patient");
-	}
-	
-	else
-	{
-    	$result = queryMysql("select * from patient WHERE roomNumber IS NOT NULL");
-    	echo "<script> console.log('ELSE FIRING FROM LINE 14'); </script>";
-	}
-    
-}
-
-else
-{
-	$result = queryMysql("SELECT * FROM patient WHERE roomNumber IS NOT NULL");
-}
+$result = queryMysql("select * from patient")
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -54,7 +36,7 @@ else
 
                 <li class="nav-item active">
 
-                    <a class="nav-link" href="main.php">Doctor Main Menu<span class="sr-only">(current)</span></a>
+                    <a class="nav-link" href="nurseMainMenu.php">Nurse Main Menu<span class="sr-only">(current)</span></a>
 
                 </li>
 
@@ -83,51 +65,14 @@ else
 
     <div class="container">
         <div class="center">
-          <h1>Doctor Main Menu</h1>
-          
-          <div class="searchBarText" style= "width: 50%; float: left;">
-			<input type='text' id="searchBarInput" onKeyUp="patientSearch();" placeholder="Enter your search term">
-			</div>
-			  
-		  <div class= "searchBarText" style = "width: 50%; margin-top: 8px; float: right;">
-			  <select id="searchCat">
-				
-				<option value=0>Patient ID</option>
-				<option value=1>First Name OR Last Name</option>
-				<option value=2>Room Number</option>
-		<!--		<option value=3>Department</option> -->
-				
-			</select>
-	      </div>
-			  
-		  
-			
-			 <div class="toggleInactivePatientDiv" style= "width: 50%;  margin-left: 25%; margin-right: 25%;">
-			  <form method="post" onsubmit="return true" action="main.php">
-			<input type="submit" name="showInactive" onChange="this.form.submit();" <?php 
-								if(isset($_POST['showInactive']))
-								{
-									if($_POST['showInactive'] == "Show Inactive Patients")
-									{
-										echo "value = 'Hide Inactive Patients'";
-									}
-									else
-									{
-										echo "value = 'Show Inactive Patients'";
-									}
-								}
-								else
-								{
-									echo "value = 'Show Inactive Patients'";
-								}?>   />
-			</form>
-		  </div>
-		</div>
-		  
+          <h1>Nurse Main Menu</h1>
+         <!-- <//?php $result = queryMysql("select * from patient");?>-->
       <?php if ($result->num_rows > 0)
       {
           ?>
-         <table id="patientViewTable" class="table table-striped">
+         <table class="table table-striped">
+        
+
               <tr>
                 <th>ID</th>
                 <th>Name</th>
@@ -140,27 +85,23 @@ else
         while ($row = mysqli_fetch_assoc($result)){
             ?>
               <tr>
-                <td><input type='hidden' id="patientID<?php echo $tableIndex ?>" value="<?php echo $row['patientID'] ?>"> <?php echo "$row[patientID]";?> </td>
+                <td><input type='hidden' id="patientID" name = "patientID" value="<?php echo $row['patientID'] ?>"> <?php echo "$row[patientID]";?> </td>
                 <td>
-					 <input type='hidden' id="patientFName<?php echo $tableIndex ?>" value="<?php echo "$row[firstName]"; ?>" >
-					 <a id="fNameTableVal<?php echo $tableIndex ?>"><?php echo "$row[firstName] ";?></a>
+					<input type='hidden' id="patientFName<?php echo $tableIndex ?>" value="<?php echo "$row[firstName]"; ?>" >
+					<a id="fNameTableVal<?php echo $tableIndex ?>"><?php echo "$row[firstName] ";?></a>
 
-				 	 <input type='hidden' id="patientLName<?php echo $tableIndex ?>" value="<?php echo "$row[lastName]"; ?>" >
+				 	<input type='hidden' id="patientLName<?php echo $tableIndex ?>" value="<?php echo "$row[lastName]"; ?>" >
 					<a id="lNameTableVal<?php echo $tableIndex ?>"><?php echo "$row[lastName]";?></a>
 
-				</td>
-                <td>
-					<input type='hidden' id="patientRm<?php echo $tableIndex ?>" value="<?php echo "$row[roomNumber]"; ?>">
+                                        </td>
+                                        <td>
+                			<input type='hidden' id="patientRm<?php echo $tableIndex ?>" value="<?php echo "$row[roomNumber]"; ?>">
 					<a id="roomTableVal<?php echo $tableIndex ?>"><?php echo "$row[roomNumber]";?></a>
 				</td>
-                  <td><button id= "detailBtn" onclick="openPopupMenu(<?php echo $tableIndex ?>)" class="btn btn-outline-success">Details</button>
-
-                  <form method='post' action='history.php' onsubmit='return true'> 
-                  <button id="historyBtn" name="patientID" value="<?php echo "$row[patientID]" ?>" class="btn btn-outline-success">History</button>
-                  </form>
-                  </td>
-                    
-
+                  <td><!--<button id= "detailBtn" onclick="openPopupMenu(<?php echo $tableIndex ?>)" class="btn btn-outline-success">Details</button>-->
+                    <form method='post' action='history.php' onsubmit='return true'> 
+                  <button id="historyBtn" name="patientID" value="<?php echo "$row[patientID]" ?>" class="btn btn-outline-success">History</button></td>
+                    </form>
               </tr>
 
             <?php ; $tableIndex++; } ?>
@@ -168,7 +109,7 @@ else
           </table>
 
           <form method='post' action='addpatient.php' onsubmit='return true'>                       
-                    <button type="submit" class="btn btn-outline-success ">Add Patient</button>     
+                    <button type="submit"  class="btn btn-outline-success ">Add Patient</button>     
                 </form>                                                                             
         </div>
 
@@ -299,36 +240,7 @@ else
 		var successMsg = document.getElementById("successMessage");
 
 		
-        //Pure JS search function
-		function patientSearch()
-		{
-			var input, filter, table, tr, td, i , textVal;
-			input = document.getElementById("searchBarInput");
-			filter = input.value.toUpperCase();
-			table = document.getElementById("patientViewTable");
-			tr = table.getElementsByTagName("tr");
-			categoryDropDown = document.getElementById("searchCat");
-			category = categoryDropDown.value;
-			
-			//loop through all table rows, and hide those that dont match
-			for(i = 0; i < tr.length; i++)
-				{
-					//category is the search option selected in the dropdown menu
-					td = tr[i].getElementsByTagName("td")[category];
-					if(td)
-						{
-							textVal = td.textContent || td.innerText;
-							if(textVal.toUpperCase().indexOf(filter) > -1)
-								{
-									tr[i].style.display = "";
-								}
-							else
-							{
-								tr[i].style.display = "none";
-							}
-						}
-				}
-		}
+
 
 
 		/*Patient Details*/
@@ -582,7 +494,7 @@ else
 
 
 
-            //patientIDHistoryItem.value = patientID.value;
+            patientIDHistoryItem.value = patientID.value;
 
             fNameHistoryItem.value = patientFNameHistory.value;
 
