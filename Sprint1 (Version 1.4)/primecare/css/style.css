@@ -163,14 +163,14 @@ button:hover {
 }
 
 .popup_main_div{
-    position: fixed;
-    width: 800px;
+    position: absolute;
+    width: 80%;
     height: auto;
     padding: 15px;
     border: 2px solid black;
     border-radius: 5px;
-    left: 50%;
-    margin-left: -400px;
+    margin-left: 10%;
+    margin-right: 10%;
     top: 50%;
     margin-top: -250px;
     background-color: white;
