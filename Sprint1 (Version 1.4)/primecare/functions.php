@@ -56,6 +56,33 @@
 		  echo "Unexpected error has occured.<br>";
 	  }
   }
+  
+  function getDrugs()
+{
+	global $connection;
+	
+	$stmt = "SELECT drugID, medicineName, CONCAT(baseDose, ' mg') as baseDose, CONCAT('Warning: ', warning) as warning, description FROM drug";
+	
+	if($result = mysqli_query($connection,$stmt))
+
+	  {
+
+		  return $result;
+
+	  }
+
+	  
+
+	  else
+
+	  {
+
+		  echo "Unexpected error has occured.<br>";
+
+	  }
+	
+}
+
   function username_exist_in_database($username)
   {		
         global $connection;
@@ -120,7 +147,12 @@
     return $connection->real_escape_string($var);
   }
 
-
+function getPatientName($var)
+{
+	$result = queryMysql("select firstName, lastName from patient where patientID = '".$var."'");
+	$row = mysqli_fetch_assoc($result);
+	return $row;
+}
 
 function getHistory($var)
 {
@@ -128,7 +160,7 @@ function getHistory($var)
 $history = array();
     //$totalHistory = array();
     
-    $stmt = "Select p.assignDate, u.lastName, '', 'Doctor Assigned' from doctorassignedtopatient p Join user u on u.userID = p.userID Where p.patientID = '".$var."'";
+    $stmt = "Select p.assignDate, CONCAT('Dr. ', u.lastName) as lastn, '', '' from doctorassignedtopatient p Join user u on u.userID = p.userID Where p.patientID = '".$var."'";
     if($result = mysqli_query($connection,$stmt))
 	  {
     while ($row_user = $result->fetch_row())
@@ -137,7 +169,7 @@ $history = array();
     }
 	  }
 
-    $stmt = "Select p.assignDate,  t.testName, '', 'Test Assigned' from patientassignedtotest p
+    $stmt = "Select p.assignDate,  t.testName, '', '' from patientassignedtotest p
     Join test t on t.testID = p.testID
     Where p.patientID = '".$var."'";
     if($result = mysqli_query($connection,$stmt))
@@ -147,7 +179,7 @@ $history = array();
     $history[] = $row_user;
     }       
 	  }
-    $stmt = "Select p.assignDateStart, t.testName, p.testResult, 'Test Results' from patientassignedtotest p
+    $stmt = "Select p.assignDateStart, t.testName, p.testResult, 'Start Test' from patientassignedtotest p
     Join test t on t.testID = p.testID
     Where p.patientID = '".$var."'";
     if($result = mysqli_query($connection,$stmt))
@@ -157,7 +189,7 @@ $history = array();
     $history[] = $row_user;
     }
 	  }
-    $stmt = "Select p.assignDate,  t.treatmentName, p.recommendedAmount , 'Treatment Assigned' from patientassignedtotreatment p
+    $stmt = "Select p.assignDate,  t.treatmentName, p.recommendedAmount , '' from patientassignedtotreatment p
     Join treatment t on t.treatmentID = p.treatmentID
     Where p.patientID = '".$var."'";
     if($result = mysqli_query($connection,$stmt))
@@ -167,7 +199,7 @@ $history = array();
     $history[] = $row_user;
     }
 	  }
-    $stmt = "Select p.assignDateStart, t.treatmentName, '', 'Patient assigned treatment' from patientassignedtotreatment p
+    $stmt = "Select p.assignDateStart, t.treatmentName, '','Start Treatment' from patientassignedtotreatment p
     Join treatment t on t.treatmentID = p.treatmentID
     Where p.patientID = '".$var."'";
     if($result = mysqli_query($connection,$stmt))
@@ -177,7 +209,7 @@ $history = array();
     $history[] = $row_user;
     }       
 	  }
-    $stmt = "Select admittedDate , '', '', 'Patient Admitted' from patienthistory where patientID = '".$var."'";
+    $stmt = "Select admittedDate, '', '', 'Patient Admitted' from patienthistory where patientID = '".$var."'";
     if($result = mysqli_query($connection,$stmt))
 	  {
     while ($row_user = $result->fetch_row())
@@ -193,7 +225,7 @@ $history = array();
     $history[] = $row_user;
     }                     
 	  }
-    $stmt = "Select p.assignDateStart,  d.medicineName, r.dose, r.timesPerDay from prescriptionassignedtopatient p
+    $stmt = "Select p.assignDateStart,  d.medicineName, concat('Dose: ', r.dose, 'mg, ', r.timesPerDay,' times per day'), 'Prescription Starts' from prescriptionassignedtopatient p
     Join prescription r on p.doctorOrderNumber = r.doctorOrderNumber
     Join drug d on r.drugID = d.drugID
     Where p.patientID = '".$var."'";
@@ -204,7 +236,7 @@ $history = array();
     $history[] = $row_user;
     }                            
 	  }
-    $stmt = "Select p.assignDateEnd, d.medicineName ,'', 'Prescription End' from prescriptionassignedtopatient p
+    $stmt = "Select p.assignDateEnd, d.medicineName ,'', 'Prescription Ends' from prescriptionassignedtopatient p
     Join prescription r on p.doctorOrderNumber = r.doctorOrderNumber
     Join drug d on r.drugID = d.drugID
     Where p.patientID = '".$var."'";

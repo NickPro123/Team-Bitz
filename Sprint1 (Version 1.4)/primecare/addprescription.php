@@ -1,44 +1,45 @@
 <?php
-
 session_start();
+
 require_once 'functions.php';
 if(!isset($_SESSION['user'])){
-    header("Location:login.php");
-    
+    $page = "login.php";
 }
 
-if (isset($_POST['firstName'])){
-    //$username = fix_string($_POST['firstName']);
+if (isset($_POST['drugID'])){
       
-        $first = $last = $rmnumber = "";
+        $drugID = $dose = $freq = $end = "";
 
  
-    $first = sanitizeString($_POST['firstName']);
-    $last = sanitizeString($_POST['lastName']);
-    $rmnumber = sanitizeString($_POST['rmnumber']);
+    $drugID = sanitizeString($_POST['drugID']);
+    $dose = sanitizeString($_POST['dose']);
+    $freq = sanitizeString($_POST['freq']);
+    $end = sanitizeString($_POST['end']);
+    
+    
 
-//echo "$first, $last, $rmnumber";
-  //  $un_temp = sanitizeString(_SERVER['PHP_AUTH_USER']);
-   // $pw_temp = sanitizeString(_SERVER['PHP_AUTH_PW']);
-
-    if ($first == "" || $last == "" || $rmnumber == "")
+    if ($drugID == "" || $dose == "" || $freq == "")
         $error = "Not all fields were entered<br>";
     else{
-       // echo "$first, $last, $rmnumber";
-        $stmt = $connection->prepare('call spAddPatient(?,?,?)');		
-	   // $stmt->bind_param('ssi', $first, $last, $rmnumber);		
-	 //  $stmt = $connection->prepare('insert into patient(firstName, lastName, roomNumber) values(?,?,?)');		
-	   $stmt->bind_param('ssi',$first, $last, $rmnumber);
+        
+        $stmt = $connection->prepare('call spAddPrescription(?,?,?,?,?)');				
+	   $stmt->bind_param('iidis',$_SESSION['patientID'],$drugID, $dose, $freq, $end);
         $stmt->execute();
          if (!$stmt) {
                echo "There was a error with your data <a href='main.php'>click here</a> to return to the main menu.<br>";
          die($connection->error);
          }
+         else
+         {
+             $page = "viewPrescriptions.php";
          }
-         
-   header('Location: main.php');
+    }
+   
+   header("Location: ". $page);
+   exit;
       
-    } 
+     
+}
 
 ?>
 <!DOCTYPE html>
@@ -60,7 +61,7 @@ if (isset($_POST['firstName'])){
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav mr-auto">
               <li class="nav-item active">
-                  <a class="nav-link" href="main.php">Doctor Main Menu<span class="sr-only">(current)</span></a>
+                  <a class="nav-link" href="viewPrescriptions.php">Return to Prescriptions Menu<span class="sr-only">(current)</span></a>
               </li>
           </ul>
           <div class="form-inline my-2 ml-lg-2">
@@ -77,29 +78,52 @@ if (isset($_POST['firstName'])){
     </a>
   </header>
   <div class="container">
-      <form method="post" action="addpatient.php" class="addpatient"> <?php $error?>
-          <div class="formHeader">Add a new Patient</div>
+      <form method="post" action="addprescription.php" class="addprescription"> <?php $error?>
+          <div class="formHeader">Add a new Prescription</div>
           <div class="form">
-              <label for="firstName">First Name</label>
-              <input type="text" maxlength="24" id="firstName" name="firstName" value="<?php $first?>" required="required">
+              <label for="drugName" >Drug Name</label>
+              <input type="hidden" name="patientID" value="<?php echo $_SESSION['patientID']; ?>" >
+			  <select name = 'drugID'>
+				  <?php 
+				  	$drugList = getDrugs();
+		  			while($drugOption = $drugList->fetch_row())
+					{
+						echo "<option value = '";
+						$isFirst = 1;
+						foreach($drugOption as $drugField)
+						{
+							if($isFirst)
+							{
+								echo $drugField;
+								echo "' > ID: $drugField";
+								$isFirst = 0;
+									
+							}
+							else
+							{
+								echo " | $drugField ";
+							}
+						}
+						echo "</option>";
+					}
+				  ?>
+			  </select>
 
-              <label for="lastName">Last Name</label>
-              <input type="text" maxlength="64" id="lastName" name="lastName" value="<?php $last?>" required="required">
+              <label for="lastName">Dose(mg)</label>
+              <input type="text" maxlength="64" id="dose" name="dose" value="<?php $dose?>" required="required">
 
-              <label for="rmNumber">Room Number</label>
-              <input type="text" maxlength="128" id="rmnumber" name="rmnumber" value="<?php $rmnumber?>" required="required">
-                <form method='post' action='addpatient.php' onsubmit='return true'>
-                    <button type="submit" class="btn btn-outline-success ">Add Patient</button>
-                </form>
+              <label for="rmNumber">Frequency(per day)</label>
+              <input type="text" maxlength="128" id="freq" name="freq" value="<?php $freq?>" required="required">
+              
+              <label for="endDate">End Date</label>
+              <input type="date" id="end" name="end" value="<?php $end ?>">
+              
+                    <button type="submit" class="btn btn-outline-success ">Add Prescription</button>
       </form>
           </div>
       <!--}else{
          echo "There is no data to be displayed please <a href='main.php'>add</a> some.";
       }-->
-<?php 
-require_once 'functions.php';
-
-      ?>
 
         <!-- Optional JavaScript -->
         <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>

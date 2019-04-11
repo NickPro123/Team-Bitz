@@ -1,44 +1,44 @@
 <?php
-
 session_start();
+
 require_once 'functions.php';
 if(!isset($_SESSION['user'])){
-    header("Location:login.php");
-    
+    $page = "login.php";
 }
 
-if (isset($_POST['firstName'])){
-    //$username = fix_string($_POST['firstName']);
+if (isset($_POST['dept'])){
       
-        $first = $last = $rmnumber = "";
+        $dept = $roomNmb = $roomDescript = $maxCap = "";
 
  
-    $first = sanitizeString($_POST['firstName']);
-    $last = sanitizeString($_POST['lastName']);
-    $rmnumber = sanitizeString($_POST['rmnumber']);
-
-//echo "$first, $last, $rmnumber";
-  //  $un_temp = sanitizeString(_SERVER['PHP_AUTH_USER']);
-   // $pw_temp = sanitizeString(_SERVER['PHP_AUTH_PW']);
-
-    if ($first == "" || $last == "" || $rmnumber == "")
+    $dept = sanitizeString($_POST['dept']); //int
+    $roomNmb = sanitizeString($_POST['roomNmb']); // int
+    $roomDescript = sanitizeString($_POST['roomDescript']); // string
+    $maxCap = sanitizeString($_POST['maxCap']); // int
+    $currentCap = 0;
+	
+    if ($roomNmb == "" || $dept == "" || $roomDescript == "" || $maxCap == "")
         $error = "Not all fields were entered<br>";
     else{
-       // echo "$first, $last, $rmnumber";
-        $stmt = $connection->prepare('call spAddPatient(?,?,?)');		
-	   // $stmt->bind_param('ssi', $first, $last, $rmnumber);		
-	 //  $stmt = $connection->prepare('insert into patient(firstName, lastName, roomNumber) values(?,?,?)');		
-	   $stmt->bind_param('ssi',$first, $last, $rmnumber);
+        
+        $stmt = $connection->prepare('insert into room (roomNumber, departmentID, description, maxCapacity, patientsAssigned) values (?,?,?,?,?)');				
+	   $stmt->bind_param('ssssi',$roomNmb,$dept,$roomDescript,$maxCap,$currentCap);
         $stmt->execute();
          if (!$stmt) {
                echo "There was a error with your data <a href='main.php'>click here</a> to return to the main menu.<br>";
          die($connection->error);
          }
+         else
+         {
+             $page = "viewRoomInformation.php";
          }
-         
-   header('Location: main.php');
+    }
+   
+   header("Location: ". $page);
+   exit;
       
-    } 
+     
+}
 
 ?>
 <!DOCTYPE html>
@@ -60,7 +60,7 @@ if (isset($_POST['firstName'])){
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav mr-auto">
               <li class="nav-item active">
-                  <a class="nav-link" href="main.php">Doctor Main Menu<span class="sr-only">(current)</span></a>
+                  <a class="nav-link" href="viewPrescriptions.php">Return to Prescriptions Menu<span class="sr-only">(current)</span></a>
               </li>
           </ul>
           <div class="form-inline my-2 ml-lg-2">
@@ -77,29 +77,41 @@ if (isset($_POST['firstName'])){
     </a>
   </header>
   <div class="container">
-      <form method="post" action="addpatient.php" class="addpatient"> <?php $error?>
-          <div class="formHeader">Add a new Patient</div>
+      <form method="post" action="addRoom.php" class="addprescription"> <?php $error?>
+          <div class="formHeader">Add a new room</div>
           <div class="form">
-              <label for="firstName">First Name</label>
-              <input type="text" maxlength="24" id="firstName" name="firstName" value="<?php $first?>" required="required">
+		  
+              <label for="roomNmb">Room Number</label>
+              <input type="text" maxlength="64" id="roomNmb" name="roomNmb" value="<?php $roomNmb?>" required="required">
 
-              <label for="lastName">Last Name</label>
-              <input type="text" maxlength="64" id="lastName" name="lastName" value="<?php $last?>" required="required">
+              <label>Department: </label>
+			  <select name = 'dept'>
+		  
+                <?php
+                      $result = queryMysql("select * from department");
+                      if ($result->num_rows > 0)
+                      {
+                        while ($row = mysqli_fetch_assoc($result))
+                        {
+                            echo '<option value=" '.$row['departmentID'].' "> '.$row['departmentID']. ' - ' .$row['departmentName'].'</option>';
+                        }
+                      }
+                ?>
 
-              <label for="rmNumber">Room Number</label>
-              <input type="text" maxlength="128" id="rmnumber" name="rmnumber" value="<?php $rmnumber?>" required="required">
-                <form method='post' action='addpatient.php' onsubmit='return true'>
-                    <button type="submit" class="btn btn-outline-success ">Add Patient</button>
-                </form>
+		  </select>
+		  
+		  <label for="description">Desciption</label>
+          <input type="text" maxlength="150" id="roomDescript" name="roomDescript" value="<?php $roomDescript?>" required="required">
+		  
+		  <label for="maxCap">Maximum Capacity</label>
+          <input type="text" maxlength="10" id="maxCap" name="maxCap" value="<?php $maxCap?>" required="required">
+              
+                    <button type="submit" class="btn btn-outline-success ">Add room</button>
       </form>
           </div>
       <!--}else{
          echo "There is no data to be displayed please <a href='main.php'>add</a> some.";
       }-->
-<?php 
-require_once 'functions.php';
-
-      ?>
 
         <!-- Optional JavaScript -->
         <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>

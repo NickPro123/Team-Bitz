@@ -66,6 +66,10 @@ $result = queryMysql("select * from patient")
     <div class="container">
         <div class="center">
           <h1>Nurse Main Menu</h1>
+          
+          <form method='post' action='addpatient.php' onsubmit='return true'>                       
+                <button type="submit"  class="btn btn-outline-success ">Add Patient</button>     
+          </form> 
          <!-- <//?php $result = queryMysql("select * from patient");?>-->
       <?php if ($result->num_rows > 0)
       {
@@ -108,9 +112,6 @@ $result = queryMysql("select * from patient")
 
           </table>
 
-          <form method='post' action='addpatient.php' onsubmit='return true'>                       
-                    <button type="submit"  class="btn btn-outline-success ">Add Patient</button>     
-                </form>                                                                             
         </div>
 
     </div>
@@ -683,7 +684,7 @@ $result = queryMysql("select * from patient")
 
     <footer class="footer">
 
-        <div class="container-fluid"> Logged in as: <?php echo "$firstName + $lastName";?>
+        <div class="container-fluid"> Logged in as: <?php echo "$_SESSION[user]";?>
 
         </div>
 

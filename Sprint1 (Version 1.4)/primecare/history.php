@@ -53,22 +53,31 @@ if(!isset($_SESSION['user'])){
 
     <div class="container">
         <div class="center">
-          <h1>Patient History <?php "($_POST[patientID])" ?></h1>
-         <!-- <//?php $result = queryMysql("select * from patient");?>-->
+          <h1>Patient History for <?php $nameOfPatient = getPatientName($_POST['patientID']); 
+			echo "$nameOfPatient[firstName] $nameOfPatient[lastName]";?></h1>
      
          <table class="table table-striped">
               <tr>
             <th>Date</th>
-            <th>Assigned</th>
+            <th>Assigned To</th>
             <th>Info</th>
-            <th>More Info</th>
+            <th></th>
                     
-                  <th></th>
               </tr>
               <?php
 		$tableIndex = 1;
 		$row = getHistory($_POST['patientID']);
+         $sort_column = array();
+            foreach ($row as $a){
+         if(!($a == ''))
+            {
+             $sort_column []= $a[0]; // 1 = your example
+
+            }
+            }
+        array_multisort($sort_column, $row);
         foreach ($row as $record){
+           if(!($record[0] == '')){
             //fix the columns after this
             ?>
               <tr>
@@ -90,7 +99,7 @@ if(!isset($_SESSION['user'])){
 		</td>
                 </tr>
 
-        <?php } ?>
+        <?php }} ?>
         
         </table>
 
@@ -101,7 +110,7 @@ if(!isset($_SESSION['user'])){
     </div>
 </body>
     <footer class="footer">
-        <div class="container-fluid"> Logged in as: <?php echo "$firstName + $lastName";?>
+        <div class="container-fluid"> Logged in as: <?php echo "$_SESSION[user]";?>
         </div>
     </footer>
 
