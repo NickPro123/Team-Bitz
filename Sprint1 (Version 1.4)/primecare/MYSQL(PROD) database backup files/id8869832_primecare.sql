@@ -3,8 +3,8 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Apr 01, 2019 at 04:23 PM
--- Server version: 10.3.13-MariaDB
+-- Generation Time: Apr 11, 2019 at 06:47 PM
+-- Server version: 10.3.14-MariaDB
 -- PHP Version: 7.3.2
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -22,72 +22,12 @@ SET time_zone = "+00:00";
 -- Database: `id8869832_primecare`
 --
 
-DELIMITER $$
---
--- Procedures
---
-DROP PROCEDURE IF EXISTS `spAddPatient`$$
-CREATE DEFINER=`id8869832_admin`@`%` PROCEDURE `spAddPatient` (IN `FN` VARCHAR(35), IN `LN` VARCHAR(35), IN `RN` INT)  NO SQL
-BEGIN
-	IF EXISTS (SELECT roomNumber FROM room WHERE RoomNumber = RN)THEN
-		IF((SELECT patientsAssigned FROM room WHERE roomNumber = RN) < (SELECT maxCapacity FROM room WHERE roomNumber = RN)) 		 THEN
-    	INSERT INTO patient (firstName, lastName, roomNumber) 		VALUES (FN, LN, RN);
-        INSERT INTO patienthistory (patientID, admittedDate) VALUES ((SELECT patientID FROM patient WHERE patientID = LAST_INSERT_ID()), NOW());  
-    	ELSE
-        	INSERT INTO patient (firstName, lastName) VALUES (FN, LN);
-            INSERT INTO patienthistory (patientID, admittedDate) VALUES ((SELECT patientID FROM patient WHERE patientID = LAST_INSERT_ID()), NOW());
-    	END IF;
-	ELSE
-        INSERT INTO patient (firstName, lastName) VALUES (FN, LN);
-        INSERT INTO patienthistory (patientID, admittedDate) VALUES ((SELECT patientID FROM patient WHERE patientID = LAST_INSERT_ID()), NOW());
-    END IF;
-END$$
-
-DROP PROCEDURE IF EXISTS `spAdmitPatient`$$
-CREATE DEFINER=`id8869832_admin`@`%` PROCEDURE `spAdmitPatient` (IN `ID` INT)  NO SQL
-BEGIN
-	INSERT INTO patienthistory (patientID, admittedDate) VALUES (ID, NOW());
-END$$
-
-DROP PROCEDURE IF EXISTS `spReleasePatient`$$
-CREATE DEFINER=`id8869832_admin`@`%` PROCEDURE `spReleasePatient` (IN `ID` INT)  NO SQL
-BEGIN
-	UPDATE room 
-    SET patientsAssigned = patientsAssigned - 1
-    WHERE roomNumber = (SELECT roomNumber FROM patient WHERE patientID = ID);
-    UPDATE patient 
-    SET roomNumber = NULL 
-    WHERE patientID = ID;
-    UPDATE patienthistory
-    SET dischargeDate = NOW()
-    WHERE patientID = ID AND admittedDate = (SELECT MAX(admittedDate) FROM patienthistory WHERE patientID = ID);
-END$$
-
-DROP PROCEDURE IF EXISTS `spUpdatePatientRoom`$$
-CREATE DEFINER=`id8869832_admin`@`%` PROCEDURE `spUpdatePatientRoom` (IN `ID` INT, IN `RN` INT)  NO SQL
-BEGIN
-	IF((SELECT patientsAssigned FROM room WHERE roomNumber = RN) < (SELECT maxCapacity FROM room WHERE roomNumber = RN)) THEN
-		UPDATE room 
-    	SET patientsAssigned = patientsAssigned + 1
-    	WHERE roomNumber = RN;
-    	UPDATE patient 
-    	SET roomNumber = RN 
-    	WHERE patientID = ID;
-    	-- SET Stat = "Patient room updated";
-    -- ELSE
-    	-- SET Stat = "Patient room has not been updated. Room at max capacity";
-    END IF;
-END$$
-
-DELIMITER ;
-
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `department`
 --
 
-DROP TABLE IF EXISTS `department`;
 CREATE TABLE `department` (
   `departmentID` int(11) NOT NULL,
   `departmentName` varchar(35) NOT NULL
@@ -117,7 +57,6 @@ INSERT INTO `department` (`departmentID`, `departmentName`) VALUES
 -- Table structure for table `doctorassignedtopatient`
 --
 
-DROP TABLE IF EXISTS `doctorassignedtopatient`;
 CREATE TABLE `doctorassignedtopatient` (
   `patientID` int(11) NOT NULL,
   `userID` int(11) NOT NULL,
@@ -137,7 +76,6 @@ INSERT INTO `doctorassignedtopatient` (`patientID`, `userID`, `assignDate`) VALU
 -- Table structure for table `drug`
 --
 
-DROP TABLE IF EXISTS `drug`;
 CREATE TABLE `drug` (
   `drugID` int(11) NOT NULL,
   `medicineName` varchar(35) NOT NULL,
@@ -151,11 +89,11 @@ CREATE TABLE `drug` (
 --
 
 INSERT INTO `drug` (`drugID`, `medicineName`, `baseDose`, `warning`, `description`) VALUES
-(1, 'first medicine', 0.7, 'First warning', 'This is medicine #1'),
-(2, 'second medicine', 0.8, 'second warning', 'This is medicine #2'),
-(3, 'Third medicine', 0.9, 'Third warning', 'This is medicine #3'),
-(4, 'Fourth medicine', 1.0, 'Fourth warning', 'This is medicine #4'),
-(5, 'Fifth medicine', 2.3, 'Fifth warning', 'This is medicine #5');
+(1, 'first medicine', '0.7', 'First warning', 'This is medicine #1'),
+(2, 'second medicine', '0.8', 'second warning', 'This is medicine #2'),
+(3, 'Third medicine', '0.9', 'Third warning', 'This is medicine #3'),
+(4, 'Fourth medicine', '1.0', 'Fourth warning', 'This is medicine #4'),
+(5, 'Fifth medicine', '2.3', 'Fifth warning', 'This is medicine #5');
 
 -- --------------------------------------------------------
 
@@ -163,7 +101,6 @@ INSERT INTO `drug` (`drugID`, `medicineName`, `baseDose`, `warning`, `descriptio
 -- Table structure for table `patient`
 --
 
-DROP TABLE IF EXISTS `patient`;
 CREATE TABLE `patient` (
   `patientID` int(11) NOT NULL,
   `firstName` varchar(35) NOT NULL,
@@ -176,12 +113,12 @@ CREATE TABLE `patient` (
 --
 
 INSERT INTO `patient` (`patientID`, `firstName`, `lastName`, `roomNumber`) VALUES
-(1, 'John', 'Doe', 101),
-(2, 'Nicholas', 'Cage', NULL),
+(1, 'Joe', 'Dough', 104),
+(2, 'Nicky', 'Cagey', NULL),
 (10, 'Lord', 'Farquaad', 101),
 (11, 'Shrek', 'Ogre', NULL),
 (13, 'Shaq', 'Kazaam', NULL),
-(14, 'Jon', 'Dough', 100),
+(14, 'Jon', 'Dough', 101),
 (18, 'Jane', 'Doe', 301),
 (19, 'Jerry', 'Smith', 301),
 (21, 'Uuuhhhhgg', 'Buuuhh', 300),
@@ -189,12 +126,16 @@ INSERT INTO `patient` (`patientID`, `firstName`, `lastName`, `roomNumber`) VALUE
 (23, 'Joe', 'Smo', 300),
 (26, 'John', 'Smith', NULL),
 (27, 'Nimda', 'Admin', NULL),
-(28, 'Doctor', 'Brule', 160);
+(28, 'Steve', 'Brule', 160),
+(29, 'Jeff', 'Golden', NULL),
+(30, 'asd', 'abc', 100),
+(31, 'Test', 'Name', NULL),
+(32, 'Billy', 'Joel', NULL),
+(33, 'Jess', 'Smith', 102);
 
 --
 -- Triggers `patient`
 --
-DROP TRIGGER IF EXISTS `tPatientRoom`;
 DELIMITER $$
 CREATE TRIGGER `tPatientRoom` AFTER INSERT ON `patient` FOR EACH ROW UPDATE room
 SET patientsAssigned = patientsAssigned + 1
@@ -208,7 +149,6 @@ DELIMITER ;
 -- Table structure for table `patientassignedtotest`
 --
 
-DROP TABLE IF EXISTS `patientassignedtotest`;
 CREATE TABLE `patientassignedtotest` (
   `patientID` int(11) NOT NULL,
   `testID` int(11) NOT NULL,
@@ -223,7 +163,8 @@ CREATE TABLE `patientassignedtotest` (
 
 INSERT INTO `patientassignedtotest` (`patientID`, `testID`, `assignDate`, `assignDateStart`, `testResult`) VALUES
 (1, 1, '2019-02-02', '2019-02-15', 'Healthy'),
-(2, 2, NULL, NULL, NULL);
+(2, 2, NULL, NULL, NULL),
+(13, 5, '2019-04-07', '2019-04-07', 'Bad Actor');
 
 -- --------------------------------------------------------
 
@@ -231,7 +172,6 @@ INSERT INTO `patientassignedtotest` (`patientID`, `testID`, `assignDate`, `assig
 -- Table structure for table `patientassignedtotreatment`
 --
 
-DROP TABLE IF EXISTS `patientassignedtotreatment`;
 CREATE TABLE `patientassignedtotreatment` (
   `patientID` int(11) NOT NULL,
   `treatmentID` int(11) NOT NULL,
@@ -245,8 +185,9 @@ CREATE TABLE `patientassignedtotreatment` (
 --
 
 INSERT INTO `patientassignedtotreatment` (`patientID`, `treatmentID`, `assignDate`, `assignDateStart`, `recommendedAmount`) VALUES
-(1, 1, '2019-02-20', '2019-02-25', 1.5),
-(2, 2, NULL, NULL, 0.0);
+(1, 1, '2019-02-20', '2019-02-25', '1.5'),
+(2, 2, NULL, NULL, '0.0'),
+(13, 2, '2019-04-07', '2019-04-10', '10.0');
 
 -- --------------------------------------------------------
 
@@ -254,7 +195,6 @@ INSERT INTO `patientassignedtotreatment` (`patientID`, `treatmentID`, `assignDat
 -- Table structure for table `patienthistory`
 --
 
-DROP TABLE IF EXISTS `patienthistory`;
 CREATE TABLE `patienthistory` (
   `patientID` int(11) NOT NULL,
   `admittedDate` datetime NOT NULL,
@@ -276,7 +216,14 @@ INSERT INTO `patienthistory` (`patientID`, `admittedDate`, `dischargeDate`) VALU
 (13, '2019-03-31 18:01:02', NULL),
 (13, '2019-03-31 18:01:10', '2019-03-31 18:01:27'),
 (10, '2019-04-01 00:45:45', NULL),
-(11, '2019-04-01 00:00:00', NULL);
+(11, '2019-04-01 00:00:00', NULL),
+(29, '2019-04-01 20:12:55', NULL),
+(30, '2019-04-07 05:48:34', NULL),
+(31, '2019-04-07 14:55:28', NULL),
+(1, '2018-03-01 00:00:00', NULL),
+(1, '2018-03-01 00:00:00', NULL),
+(32, '2019-04-08 00:09:20', NULL),
+(33, '2019-04-08 15:03:10', NULL);
 
 -- --------------------------------------------------------
 
@@ -284,7 +231,6 @@ INSERT INTO `patienthistory` (`patientID`, `admittedDate`, `dischargeDate`) VALU
 -- Table structure for table `prescription`
 --
 
-DROP TABLE IF EXISTS `prescription`;
 CREATE TABLE `prescription` (
   `doctorOrderNumber` int(11) NOT NULL,
   `drugID` int(11) NOT NULL,
@@ -297,8 +243,20 @@ CREATE TABLE `prescription` (
 --
 
 INSERT INTO `prescription` (`doctorOrderNumber`, `drugID`, `dose`, `timesPerDay`) VALUES
-(1, 1, 0.0, 0),
-(2, 2, 0.0, 0);
+(1, 1, '0.0', 0),
+(2, 2, '0.0', 0),
+(3, 2, '10.0', 2),
+(4, 2, '10.0', 3),
+(5, 2, '10.0', 1),
+(6, 4, '9.0', 4),
+(7, 2, '5.0', 5),
+(8, 3, '4.0', 2),
+(9, 2, '1.0', 2),
+(10, 2, '1.0', 2),
+(11, 5, '0.0', 2),
+(12, 5, '5.0', 4),
+(13, 3, '1.0', 1),
+(14, 1, '30.0', 2);
 
 -- --------------------------------------------------------
 
@@ -306,7 +264,6 @@ INSERT INTO `prescription` (`doctorOrderNumber`, `drugID`, `dose`, `timesPerDay`
 -- Table structure for table `prescriptionassignedtopatient`
 --
 
-DROP TABLE IF EXISTS `prescriptionassignedtopatient`;
 CREATE TABLE `prescriptionassignedtopatient` (
   `doctorOrderNumber` int(11) NOT NULL,
   `patientID` int(11) NOT NULL,
@@ -320,7 +277,17 @@ CREATE TABLE `prescriptionassignedtopatient` (
 
 INSERT INTO `prescriptionassignedtopatient` (`doctorOrderNumber`, `patientID`, `assignDateStart`, `assignDateEnd`) VALUES
 (1, 1, '2019-03-01', '2019-04-01'),
-(2, 2, NULL, NULL);
+(2, 2, NULL, NULL),
+(5, 13, '2019-04-09', '2019-04-10'),
+(6, 1, '2019-04-09', '2019-04-17'),
+(7, 1, '2019-04-09', '0000-00-00'),
+(8, 2, '2019-04-09', '2019-04-30'),
+(9, 33, '2019-04-09', '2019-04-15'),
+(10, 33, '2019-04-09', '2019-04-15'),
+(11, 1, '2019-04-09', '2022-01-02'),
+(12, 1, '2019-04-09', '2019-04-25'),
+(13, 23, '2019-04-10', '2019-04-23'),
+(14, 18, '2019-04-10', '2019-04-18');
 
 -- --------------------------------------------------------
 
@@ -328,7 +295,6 @@ INSERT INTO `prescriptionassignedtopatient` (`doctorOrderNumber`, `patientID`, `
 -- Table structure for table `room`
 --
 
-DROP TABLE IF EXISTS `room`;
 CREATE TABLE `room` (
   `roomNumber` int(11) NOT NULL,
   `departmentID` int(11) NOT NULL,
@@ -342,12 +308,12 @@ CREATE TABLE `room` (
 --
 
 INSERT INTO `room` (`roomNumber`, `departmentID`, `description`, `maxCapacity`, `patientsAssigned`) VALUES
-(100, 9, '4 bed room on the first floor', 4, 2),
-(101, 9, '4 bed room on the first floor', 4, 1),
-(102, 9, '4 bed room on the first floor', 4, 0),
+(100, 9, '4 bed room on the first floor', 4, 3),
+(101, 9, '4 bed room on the first floor', 4, 4),
+(102, 9, '4 bed room on the first floor', 4, 1),
 (103, 9, '4 bed room on the first floor', 4, 0),
-(104, 9, '4 bed room on the first floor', 4, 0),
-(105, 9, '4 bed room on the first floor', 4, 0),
+(104, 9, '4 bed room on the first floor', 4, 1),
+(105, 9, '4 bed room on the first floor', 4, 2),
 (110, 12, '2 bed room on the first floor', 2, 0),
 (111, 12, '2 bed room on the first floor', 2, 0),
 (112, 12, '2 bed room on the first floor', 2, 0),
@@ -414,7 +380,8 @@ INSERT INTO `room` (`roomNumber`, `departmentID`, `description`, `maxCapacity`, 
 (341, 11, '4 bed room on the third floor', 4, 0),
 (342, 11, '4 bed room on the third floor', 4, 0),
 (343, 11, '4 bed room on the third floor', 4, 0),
-(344, 11, '4 bed room on the third floor', 4, 0);
+(344, 11, '4 bed room on the third floor', 4, 0),
+(700, 7, 'John\\\'s Room', 5, 0);
 
 -- --------------------------------------------------------
 
@@ -422,7 +389,6 @@ INSERT INTO `room` (`roomNumber`, `departmentID`, `description`, `maxCapacity`, 
 -- Table structure for table `test`
 --
 
-DROP TABLE IF EXISTS `test`;
 CREATE TABLE `test` (
   `testID` int(11) NOT NULL,
   `testName` varchar(100) COLLATE utf8_unicode_ci NOT NULL
@@ -445,7 +411,6 @@ INSERT INTO `test` (`testID`, `testName`) VALUES
 -- Table structure for table `treatment`
 --
 
-DROP TABLE IF EXISTS `treatment`;
 CREATE TABLE `treatment` (
   `treatmentID` int(11) NOT NULL,
   `treatmentName` varchar(100) COLLATE utf8_unicode_ci NOT NULL
@@ -468,7 +433,6 @@ INSERT INTO `treatment` (`treatmentID`, `treatmentName`) VALUES
 -- Table structure for table `user`
 --
 
-DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
   `userID` int(11) NOT NULL,
   `firstName` varchar(50) NOT NULL,
@@ -631,19 +595,19 @@ ALTER TABLE `drug`
 -- AUTO_INCREMENT for table `patient`
 --
 ALTER TABLE `patient`
-  MODIFY `patientID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `patientID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT for table `prescription`
 --
 ALTER TABLE `prescription`
-  MODIFY `doctorOrderNumber` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `doctorOrderNumber` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `room`
 --
 ALTER TABLE `room`
-  MODIFY `roomNumber` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=345;
+  MODIFY `roomNumber` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=701;
 
 --
 -- AUTO_INCREMENT for table `test`
