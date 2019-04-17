@@ -1,10 +1,11 @@
 <?php
 	require_once 'functions.php';
 
-	$pk = $_POST['primaryKey'];
-	$firstname = $_POST['fname'];
-	$lastname = $_POST['lname'];
-	$roomNum = $_POST['room'];
+	$patient = $_POST['patient'];
+	$pk = $_POST['drugKey'];
+	$newDose = $_POST['dose'];
+	$newFreq = $_POST['freq'];
+	//$newEnd = $_POST['end'];
 
 	/*
 	$stmt = "UPDATE patient SET firstName = \"" . $firstname . "\" , lastName = \"" . $lastname . "\" , roomNumber = " . $roomNum . " WHERE patientID =  " . $pk  . ";";
@@ -18,12 +19,12 @@
 		 echo "Unexpected error has occured. Error code 3.<br>";
 	 }
 	 */
-    $stmt = $connection->prepare('call spUpdatePatient(?, ?, ?, ?)');
-    $stmt->bind_param('issi', $pk, $firstname, $lastname, $roomNum);
+    $stmt = $connection->prepare("UPDATE prescriptionassignedtopatient SET dose = ?, timesPerDay = ? 
+                                  WHERE patientID = ? AND drugID = ?;");
+    $stmt->bind_param('diii', $newDose, $newFreq, $patient, $pk);
     $stmt->execute();
          if (!$stmt) {
                echo "There was a error with your data <a href='main.php'>click here</a> to return to the main menu.<br>";
          die($connection->error);
          }
-         
 ?>

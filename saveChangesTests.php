@@ -1,11 +1,10 @@
 <?php
 	require_once 'functions.php';
 
+	$patient = $_POST['patient'];
 	$pk = $_POST['primaryKey'];
-	$firstname = $_POST['fname'];
-	$lastname = $_POST['lname'];
-	$roomNum = $_POST['room'];
-
+	$start = $_POST['start'];
+	$result = $_POST['result'];
 	/*
 	$stmt = "UPDATE patient SET firstName = \"" . $firstname . "\" , lastName = \"" . $lastname . "\" , roomNumber = " . $roomNum . " WHERE patientID =  " . $pk  . ";";
 	if($result = mysqli_query($connection,$stmt))
@@ -18,8 +17,8 @@
 		 echo "Unexpected error has occured. Error code 3.<br>";
 	 }
 	 */
-    $stmt = $connection->prepare('call spUpdatePatient(?, ?, ?, ?)');
-    $stmt->bind_param('issi', $pk, $firstname, $lastname, $roomNum);
+    $stmt = $connection->prepare('UPDATE patientassignedtotest SET assignDateStart = ?, testResult = ? WHERE patientID = ? AND testID = ?;');
+    $stmt->bind_param('ssii', $start, $result, $patient, $pk);
     $stmt->execute();
          if (!$stmt) {
                echo "There was a error with your data <a href='main.php'>click here</a> to return to the main menu.<br>";
