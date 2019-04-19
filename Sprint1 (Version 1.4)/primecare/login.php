@@ -9,10 +9,10 @@ session_start();
     <link rel="stylesheet" type="text/css" href="css/style.css">
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <link href="https://fonts.googleapis.com/css?family=Lato|Raleway:400,700,900" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Prime Health Care - Log In</title>
 </head>
-
 <!--Navbar-->
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <a class="navbar-brand" href="index.html">Prime Care</a>
@@ -22,7 +22,6 @@ session_start();
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
             <li class="nav-item active">
-                <a class="nav-link" href="index.html">Home <span class="sr-only">(current)</span></a>
             </li>
         </ul>
         <div class="form-inline my-2 my-lg-0">
@@ -37,13 +36,11 @@ session_start();
         </div>
     </div>
 </nav>
-
 <header>
     <a href="index.html">
         <img src="images/logo.png" class="logo" alt="HealthCare Logo">
     </a>
 </header>
-
 <div>
 <div class="container">
 <form method='post' action='login.php' class="signUp"><?php $error?>
@@ -55,7 +52,6 @@ session_start();
     <input type="password" maxlength="16" name="pass" id="password" value="<?php $pass ?>" required="required">
     <input type="submit" value="Log In">
 </form>
-
 <form method="post" action="Signup.php" onsubmit="return true">
     <input type="submit" value="Sign Up">
     <!-- Optional JavaScript -->
@@ -65,12 +61,10 @@ session_start();
 </div>
 </div>
 </body>
-
 <footer class="footer">
-    <div class="container-fluid"> Footer content goes here
+    <div class="container-fluid">
     </div>
 </footer>
-
 </html>
 <?php
   require_once 'functions.php';
@@ -101,6 +95,7 @@ session_start();
             {
               session_start();
               $_SESSION['user'] = $user;
+              $_SESSION['id'] = $row[0];
               $_SESSION['pass'] = $pass;
               $error = "you have successfully logged in";
 		
@@ -109,7 +104,7 @@ session_start();
 			$query1 = "SELECT type FROM user WHERE username='$user' AND type ='doctor'";
 			$result1 = queryMysql($query1);
 			if($result1->num_rows == 0){
-				 header('Location: nurseMainMenu.php'); //bring you to the nurse main menu
+				 header('Location: main.php'); //bring you to the nurse main menu
 			} else {
 				header('Location: main.php'); //bring you to the doctor main menu
 				$_SESSION['doctor'] = "1";

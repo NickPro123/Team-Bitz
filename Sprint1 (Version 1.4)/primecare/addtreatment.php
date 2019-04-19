@@ -6,23 +6,26 @@ if(!isset($_SESSION['user'])){
     $page = "login.php";
 }
 
-if (isset($_POST['dept'])){
+if (isset($_POST['treatmentID'])){
       
-        $dept = $roomNmb = $roomDescript = $maxCap = "";
+        $treatmentID = $start = $inst = "";
 
  
-    $dept = sanitizeString($_POST['dept']); //int
-    $roomNmb = sanitizeString($_POST['roomNmb']); // int
-    $roomDescript = sanitizeString($_POST['roomDescript']); // string
-    $maxCap = sanitizeString($_POST['maxCap']); // int
-    $currentCap = 0;
-	
-    if ($roomNmb == "" || $dept == "" || $roomDescript == "" || $maxCap == "")
+    $treatmentID = sanitizeString($_POST['treatmentID']);
+    $inst = sanitizeString($_POST['instructions']);
+  
+    
+        $start = sanitizeString($_POST['start']);
+
+    
+    
+
+    if ($treatmentID == "" || $inst == "" || $start == "")
         $error = "Not all fields were entered<br>";
     else{
         
-        $stmt = $connection->prepare('insert into room (roomNumber, departmentID, description, maxCapacity, patientsAssigned) values (?,?,?,?,?)');				
-	   $stmt->bind_param('ssssi',$roomNmb,$dept,$roomDescript,$maxCap,$currentCap);
+        $stmt = $connection->prepare('call spAddTreatment(?,?,?,?,?)');				
+	   $stmt->bind_param('iissi',$_SESSION['patientID'],$treatmentID, $start, $inst, $_SESSION['id']);
         $stmt->execute();
          if (!$stmt) {
                echo "There was a error with your data <a href='main.php'>click here</a> to return to the main menu.<br>";
@@ -30,7 +33,7 @@ if (isset($_POST['dept'])){
          }
          else
          {
-             $page = "viewRoomInformation.php";
+             $page = "viewTreatments.php";
          }
     }
    
@@ -49,8 +52,9 @@ if (isset($_POST['dept'])){
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
         <link href="https://fonts.googleapis.com/css?family=Lato|Raleway:400,700,900" rel="stylesheet">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <title>Prime Health Care - Add Room</title>
+        <title>Prime Health Care - Add Treatment</title>
     </head>
+
     <!--Navbar-->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="main.php">Prime Care</a>
@@ -59,8 +63,23 @@ if (isset($_POST['dept'])){
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
-                <li class="nav-item active">
-                    <a class="nav-link" href="viewRoomInformation.php">Return to View Rooms<span class="sr-only">(current)</span></a>
+                <li class="nav-item">
+                    <a class="nav-link" href="main.php">Main Menu</a>
+                </li>
+                <!-- Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" data-toggle="dropdown"
+                       aria-haspopup="true" aria-expanded="false"><?php $nameOfPatient = getPatientName($_SESSION['patientID']);
+                        echo "$nameOfPatient[firstName] $nameOfPatient[lastName]";?></a>
+                    <div class="dropdown-menu dropdown-primary" aria-labelledby="navbarDropdownMenuLink">
+                        <a class="dropdown-item" href="viewPrescriptions.php">View Prescriptions</a>
+                        <a class="dropdown-item" href="addprescription.php">Add Prescriptions</a>
+                        <a class="dropdown-item" href="viewTests.php">View Tests</a>
+                        <a class="dropdown-item" href="addtest.php">Add Test</a>
+                        <a class="dropdown-item" href="viewTreatments.php">View Treatments</a>
+                        <a class="dropdown-item" href="addtreatment.php">Add Treatment</a>
+                        <a class="dropdown-item" href="history.php">View History</a>
+                    </div>
                 </li>
             </ul>
             <div class="form-inline my-2 ml-lg-2">
@@ -82,47 +101,57 @@ if (isset($_POST['dept'])){
     </nav>
 
 
-
   <header>
     <a href="main.php">
       <img src="images/logo.png"  class="logo">
     </a>
   </header>
+
   <div class="container">
-      <form method="post" action="addRoom.php" class="addprescription"> <?php $error?>
-          <div class="formHeader">Add a new room</div>
+      <form method="post" action="addtreatment.php" class="addtreatment"> <?php $error?>
+          <div class="formHeader">Add a new Treatment</div>
           <div class="form">
-		    <div class="form-group">
-                  <label for="roomNmb">Room Number</label>
-                  <input type="text" maxlength="64" id="roomNmb" class="form-control" name="roomNmb" value="<?php $roomNmb?>" required="required">
-            </div>
               <div class="form-group">
-                  <label for="dept">Department: </label>
-                  <select name = 'dept' class="form-control">
-                    <?php
-                          $result = queryMysql("select * from department");
-                          if ($result->num_rows > 0)
-                          {
-                            while ($row = mysqli_fetch_assoc($result))
+                  <label for="treatmentID" >Treatment Name</label>
+                  <input type="hidden" name="patientID" value="<?php echo $_SESSION['patientID']; ?>" >
+                  <select name = 'treatmentID' class="form-control">
+                      <?php
+                        $treatmentList = getTreatment();
+                        while($treatmentOption = $treatmentList->fetch_row())
+                        {
+                            echo "<option value = '";
+                            $isFirst = 1;
+                            foreach($treatmentOption as $treatmentField)
                             {
-                                echo '<option value=" '.$row['departmentID'].' "> '.$row['departmentID']. ' - ' .$row['departmentName'].'</option>';
+                                if($isFirst)
+                                {
+                                    echo $treatmentField;
+                                    echo "' > ID: $treatmentField";
+                                    $isFirst = 0;
+
+                                }
+                                else
+                                {
+                                    echo " | $treatmentField ";
+                                }
                             }
-                          }
-                    ?>
-                </select>
+                            echo "</option>";
+                        }
+                      ?>
+                  </select>
               </div>
 
               <div class="form-group">
-                  <label for="roomDescript">Desciption</label>
-                  <input type="text" maxlength="150" id="roomDescript" class="form-control" name="roomDescript" value="<?php $roomDescript?>" required="required">
+                  <label for="instructions">Instructions</label>
+                  <input type="text" maxlength="128" id="instructions" class="form-control" name="instructions" value="<?php $inst?>" required="required">
               </div>
 
               <div class="form-group">
-                  <label for="maxCap">Maximum Capacity</label>
-                  <input type="text" maxlength="10" id="maxCap" class="form-control" name="maxCap" value="<?php $maxCap?>" required="required">
+                  <label for="start">Start Date</label>
+                  <input type="date" id="start" class="form-control" name="start" value="<?php $start ?>">
               </div>
               
-              <button type="submit" class="btn btn-outline-success ">Add room</button>
+              <button type="submit" class="btn btn-outline-success ">Add Treatment</button>
       </form>
   </div>
       <!--}else{
@@ -135,7 +164,7 @@ if (isset($_POST['dept'])){
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     </div>
     <footer class="footer">
-        <div class="container-fluid"><i class="fas fa-user"> </i> Logged in as: <?php echo "$_SESSION[user]";?>
+        <div class="container-fluid"> <i class="fas fa-user"></i> Logged in as: <?php echo "$_SESSION[user]";?>
         </div>
     </footer>
 </html>

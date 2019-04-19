@@ -164,13 +164,12 @@ button:hover {
 
 .popup_main_div{
     position: absolute;
-    width: 80%;
+    width: 50%;
     height: auto;
     padding: 15px;
+    margin-left: 25%;
     border: 2px solid black;
     border-radius: 5px;
-    margin-left: 10%;
-    margin-right: 10%;
     top: 50%;
     margin-top: -250px;
     background-color: white;
@@ -198,6 +197,10 @@ button:hover {
     float: right;
 }
 
+#searchCat{
+    margin-top:8px;
+}
+
 #editHistoryBtn{
     height: 25px;
     width: auto;
@@ -205,16 +208,18 @@ button:hover {
 }
 
 table {
-     border-collapse: collapse;
+    border-collapse: collapse;
  }
 
 .footer {
     position: fixed;
     color: #fff;
-    font-size: .75em;
+    font-size: 1em;
     bottom: 0;
     width: 100%;
     height: 60px; /* Set the fixed height of the footer here */
     line-height: 60px; /* Vertically center the text there */
     background-color: #4CAF50;
 }
+
+
