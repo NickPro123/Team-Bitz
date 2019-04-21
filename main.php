@@ -63,7 +63,7 @@ else
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
-        <link href="https://fonts.googleapis.com/css?family=Lato|Raleway:400,700,900" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Lato|Montserrat:500,700" rel="stylesheet">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title>Prime Health Care - Main Menu</title>
     </head>
@@ -290,12 +290,11 @@ else
                                 </div>
                                 <div class="col-lg float-right">
                                     <img id= "editBtn" src="images/edit_mode.png" style="cursor: pointer; max-width: 50px; max-height: 50px; margin-left:10px; margin-top: 10px;" onClick="enableEditMode();" >
-                                    <a id="successMessage"></a>
                                 </div>
                             </div>
                             <?php }?>
                         </div>
-                    <div id="close_popup_div" onclick="closePopupMenu()">
+                    <div id="close_popup_div" >
                         <p title="Close Detail Menu" >
                             X
                         </p>
@@ -321,7 +320,6 @@ else
 		var patientRm;
 		var recordIndex;
 		var saveBtn = document.getElementById("saveBtn");
-		var successMsg = document.getElementById("successMessage");
 		
         //Pure JS search function
 		function patientSearch()
@@ -404,7 +402,9 @@ else
 			document.getElementById("treatmentBtnDetail").value = patientID.value;
 			document.getElementById("prescriptionBtnDetail").value = patientID.value;
 			document.getElementById("historyBtnDetail").value = patientID.value;
+			<?php if(isset($_SESSION['doctor'])){ ?>
 			document.getElementById("dischargeBtnDetail").value = patientID.value;
+			<?php } ?>
 		}
         function closePopupMenu()
         {
@@ -418,7 +418,6 @@ else
 			var scrollPosition = html.data('scroll-position');
 			html.css('overflow', html.data('previous-overflow'));
 			window.scrollTo(scrollPosition[0], scrollPosition[1])
-            successMsg.innerHTML = "";
         }
         <?php if(isset($_SESSION['doctor'])){ ?>
         function enableEditMode()
@@ -431,7 +430,6 @@ else
                 lNameMenuItem.readOnly = false;
                 deptMenuItem.disabled = false;
                 roomMenuItem.disabled = false;
-                successMsg.innerHTML = "";
                 isEditing = true;
             }
             else
@@ -557,16 +555,44 @@ else
 		//JQuery to discharge patient when doctor clicks dischargeBtn
 		$(document).ready(function(){
 		    $("#dischargeBtnDetail").click(function(){
+		        var dialog = confirm("Are you sure you want to discharge patient?");
 		        var patient = $(this).val();
 		        
-		        $.ajax({
-		            url: "dischargePatient.php",
-		            type: "post",
-		            data: {patientID: patient},
-		            success:function(response){
-		                window.location.href='main.php';
+		        if(dialog == true)
+		        {
+		            $.ajax({
+		                url: "dischargePatient.php",
+		                type: "post",
+		                data: {patientID: patient},
+		                success:function(response){
+		                    window.location.href='main.php';
+		                }
+		            });
+		        }
+		    });
+		});
+		
+		//If in editing mode, and the close button is clicked confirm that the user doesnt want to save changes
+		$(document).ready(function(){
+		    $("#close_popup_div").click(function(){
+		        if(isEditing)
+		        {
+		            var dialog = confirm("Are you sure you want to close? Any unsaved changes will be lost.");
+		            
+		            if(dialog == true)
+		            {
+		                closePopupMenu();
 		            }
-		        });
+		            else
+		            {
+		                
+		            }
+		        }
+		        
+		        else
+		        {
+		            closePopupMenu();
+		        }
 		    });
 		});
 		        

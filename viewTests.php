@@ -14,10 +14,12 @@ if(isset($_POST['patientID']) || isset($_SESSION['patientID']))
 	else if(isset($_SESSION['patientID']))
 	    $id = $_SESSION['patientID'];
 	    
-	$result = queryMysql("SELECT t.testID, t.testName, ptt.assignDate, ptt.assignDateStart, 							  ptt.testResult
+	$result = queryMysql("SELECT t.testID, t.testName, ptt.assignDate, ptt.assignDateStart, 							  ptt.testResult, ptt.userID, u.lastName
 						  FROM test as t
 						  JOIN patientassignedtotest as ptt
 						  ON t.testID = ptt.testID
+						  JOIN user AS u
+						  ON ptt.userID = u.userID
 						  WHERE ptt.patientID = ". $id ."");  
 }
 else
@@ -54,11 +56,17 @@ else
                         echo "$nameOfPatient[firstName] $nameOfPatient[lastName]";?></a>
                     <div class="dropdown-menu dropdown-primary" aria-labelledby="navbarDropdownMenuLink">
                         <a class="dropdown-item" href="viewPrescriptions.php">View Prescriptions</a>
+                         <?php if(isset($_SESSION['doctor'])){ ?>
                         <a class="dropdown-item" href="addprescription.php">Add Prescriptions</a>
-                        <a class="dropdown-item" href="viewTests.php">View Tests</a>
+                        <?php }?>
+                       <!-- <a class="dropdown-item" href="viewTests.php">View Tests</a> -->
+                         <?php if(isset($_SESSION['doctor'])){ ?>
                         <a class="dropdown-item" href="addtest.php">Add Test</a>
+                        <?php }?>
                         <a class="dropdown-item" href="viewTreatments.php">View Treatments</a>
+                         <?php if(isset($_SESSION['doctor'])){ ?>
                         <a class="dropdown-item" href="addtreatment.php">Add Treatment</a>
+                        <?php }?>
                         <a class="dropdown-item" href="history.php">View History</a>
                     </div>
                 </li>
@@ -118,7 +126,8 @@ else
                 <th>Test Name</th>
                 <th>Assign Date</th>
                 <th>Start Date</th>
-                  <th>Result</th>
+                <th>Result</th>
+                <th>Assigned By</th>
 				  
 				  <th></th>
 				  
@@ -145,12 +154,12 @@ else
 					<a id="startDateVal<?php echo $tableIndex ?>"><?php echo "$row[assignDateStart]";?></a>
 				</td>
 				<td>
-				
 					<input type="hidden" id="result<?php echo $tableIndex ?>" value="<?php echo "$row[testResult]"; ?>" >
-					
 					<a id="resultVal<?php echo $tableIndex ?>"><?php echo "$row[testResult]";?></a>
-					
-					
+				</td>
+				<td>
+				    <input type="hidden" id="userID<?php echo $tableIndex ?>" value="<?php echo "$row[userID]"; ?>" >
+				    <a>Dr. </a><a id="userIDVal<?php echo $tableIndex ?>"><?php echo "$row[lastName]"; ?></a>
 				</td>
     
                    <td class="btnCol">
@@ -161,11 +170,11 @@ else
             <?php ; $tableIndex++; } }else echo "<div class='container style=float: left;'>There are currently no tests assigned to this patient. Assign a test below </div>"?>
 </table>
           
-    
+     <?php if(isset($_SESSION['doctor'])){ ?>
           <form method='post' action='addtest.php' onsubmit='return true'>                       
                     <button type="submit" name="patientID" value="<?php echo $id; ?>"class="btn btn-outline-success ">Add Test</button>     
                 </form>                
-             
+             <?php }?>
         </div>
     </div>
             <!--Prescription Details Popup-->
@@ -213,7 +222,7 @@ else
                         <button id = "saveBtn" onClick="saveDetails();">Save Changes</button>
                         <?php } ?>
 </div>
-                    <div id="close_popup_div" onclick="closePopupMenu()">
+                    <div id="close_popup_div">
                         <p title="Close Detail Menu" >
                             X
                         </p>
@@ -374,6 +383,30 @@ else
 					}
 				});
 			});
+		});
+		
+		//If in editing mode, and the close button is clicked confirm that the user doesnt want to save changes
+		$(document).ready(function(){
+		    $("#close_popup_div").click(function(){
+		        if(isEditing)
+		        {
+		            var dialog = confirm("Are you sure you want to close? Any unsaved changes will be lost.");
+		            
+		            if(dialog == true)
+		            {
+		                closePopupMenu();
+		            }
+		            else
+		            {
+		                
+		            }
+		        }
+		        
+		        else
+		        {
+		            closePopupMenu();
+		        }
+		    });
 		});
 			
 		 <?php   if(isset($_SESSION['doctor'])){ ?>

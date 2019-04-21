@@ -50,9 +50,11 @@ require_once 'functions.php';
     <div class="container">
         <div class="center">
             <h1>Room Information</h1>
+            <div class="addRoom">
 		<form method='post' action='addRoom.php' onsubmit='return true'>                       
-                 <button type="submit" style= "width: 50%;  margin-left: auto; margin-right: auto;">Add Room</button>
+                 <input type="submit"value="Add Room">
          </form>
+         </div>
 	<?php if ($result->num_rows > 0)
       {
           ?>

@@ -39,12 +39,18 @@ if(isset($_POST['patientID']))
                      echo "$nameOfPatient[firstName] $nameOfPatient[lastName]";?></a>
                  <div class="dropdown-menu dropdown-primary" aria-labelledby="navbarDropdownMenuLink">
                      <a class="dropdown-item" href="viewPrescriptions.php">View Prescriptions</a>
-                     <a class="dropdown-item" href="addprescription.php">Add Prescriptions</a>
-                     <a class="dropdown-item" href="viewTests.php">View Tests</a>
-                     <a class="dropdown-item" href="addtest.php">Add Test</a>
-                     <a class="dropdown-item" href="viewTreatments.php">View Treatments</a>
-                     <a class="dropdown-item" href="addtreatment.php">Add Treatment</a>
-                     <a class="dropdown-item" href="history.php">View History</a>
+                         <?php if(isset($_SESSION['doctor'])){ ?>
+                        <a class="dropdown-item" href="addprescription.php">Add Prescriptions</a>
+                        <?php }?>
+                        <a class="dropdown-item" href="viewTests.php">View Tests</a>
+                         <?php if(isset($_SESSION['doctor'])){ ?>
+                        <a class="dropdown-item" href="addtest.php">Add Test</a>
+                        <?php }?>
+                        <a class="dropdown-item" href="viewTreatments.php">View Treatments</a>
+                         <?php if(isset($_SESSION['doctor'])){ ?>
+                        <a class="dropdown-item" href="addtreatment.php">Add Treatment</a>
+                        <?php }?>
+                        <!-- <a class="dropdown-item" href="history.php">View History</a> -->
                  </div>
              </li>
          </ul>
