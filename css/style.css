@@ -1,12 +1,33 @@
 html{
+    height: 100%;
+}
+
+@media (max-width: 740px) {
+    html,
+    body,
+    header,
+    .view {
+        height: 100vh;
+    }
+}
+
+@media (max-width: 991px) {
+    .navbar:not(.top-nav-collapse) {
+        background: #78909c !important;
+    }
+}
+
+html{
     font-family: 'Lato', sans-serif;
     position: relative;
     min-height: 100%;
 }
 
+
 body{
     padding-bottom: 65px;
 }
+
 /* Centers and styles the signUp Form*/
 .signUp{
     margin-right: auto;
@@ -21,6 +42,7 @@ body{
     margin-right: auto;
     margin-left: auto;
     width: 50%;
+    text-align: center;
     /*border: 1px solid #4CAF50;*/
     padding: 0px 10px;
 }
@@ -33,24 +55,20 @@ body{
     padding-bottom: 5px;
     padding-top: 5px;
 }
-.home {
-    text-align: center;
-    margin-right: auto;
-    margin-left: auto;
-}
 h1{
-    font-family: 'Raleway', sans-serif;
-    font-weight: 900!important;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700!important;
     margin-bottom: 10px;
+    letter-spacing: 3px;
 }
 h2{
-    font-family: 'Raleway', sans-serif!important;
-    font-weight: 700!important;
+    font-family: 'Montserrat', sans-serif!important;
+    font-weight: 500!important;
     text-align: center;
 }
 h3{
     text-align:center;
-    font-family: 'Raleway', sans-serif!important;
+    font-family: 'Montserrat', sans-serif!important;
     }
 
 /* Style inputs */
@@ -129,7 +147,8 @@ button:hover {
     margin-top: 15px;
     padding: 5px;
     font-size: 2em;
-    font-family: 'Raleway', sans-serif!important;
+    font-family: 'Montserrat', sans-serif!important;
+    letter-spacing: 2px;
     font-weight: 700!important;
 }
 
@@ -138,7 +157,8 @@ button:hover {
 	margin-top: 10px;
     margin-bottom: 25px;
     font-size: 1.5em;
-    font-family: 'Raleway', sans-serif!important;
+    font-family: 'Montserrat', sans-serif!important;
+    letter-spacing: 2px;
     font-weight: 700!important;
 }
 
@@ -222,4 +242,9 @@ table {
     background-color: #4CAF50;
 }
 
+.addRoom{
+    width: 50%;  
+    margin-left: auto; 
+    margin-right: auto;
+}
 

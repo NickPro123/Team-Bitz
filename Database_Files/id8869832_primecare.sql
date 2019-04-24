@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Apr 11, 2019 at 06:47 PM
+-- Generation Time: Apr 17, 2019 at 11:50 PM
 -- Server version: 10.3.14-MariaDB
 -- PHP Version: 7.3.2
 
@@ -21,6 +21,88 @@ SET time_zone = "+00:00";
 --
 -- Database: `id8869832_primecare`
 --
+
+DELIMITER $$
+--
+-- Procedures
+--
+CREATE PROCEDURE `spAddPatient` (IN `FN` VARCHAR(35), IN `LN` VARCHAR(35), IN `RN` INT)  NO SQL
+BEGIN
+	IF EXISTS (SELECT roomNumber FROM room WHERE RoomNumber = RN)THEN
+		IF((SELECT patientsAssigned FROM room WHERE roomNumber = RN) < (SELECT maxCapacity FROM room WHERE roomNumber = RN)) 		 THEN
+    	INSERT INTO patient (firstName, lastName, roomNumber) 		VALUES (FN, LN, RN);
+        INSERT INTO patienthistory (patientID, admittedDate) VALUES ((SELECT patientID FROM patient WHERE patientID = LAST_INSERT_ID()), NOW());  
+    	ELSE
+        	INSERT INTO patient (firstName, lastName) VALUES (FN, LN);
+            INSERT INTO patienthistory (patientID, admittedDate) VALUES ((SELECT patientID FROM patient WHERE patientID = LAST_INSERT_ID()), NOW());
+    	END IF;
+	ELSE
+        INSERT INTO patient (firstName, lastName) VALUES (FN, LN);
+        INSERT INTO patienthistory (patientID, admittedDate) VALUES ((SELECT patientID FROM patient WHERE patientID = LAST_INSERT_ID()), NOW());
+    END IF;
+END$$
+
+CREATE PROCEDURE `spAddPrescription` (IN `pID` INT, IN `dID` INT, IN `dDose` DECIMAL, IN `tpd` INT, IN `endDate` DATE, IN `uID` INT)  NO SQL
+BEGIN
+ 	INSERT INTO prescriptionassignedtopatient(patientID, drugID, assignDateStart, assignDateEnd, userID, dose, timesPerDay) VALUES (pID, dID, NOW(), endDate, uID, dDose, tpd);
+END$$
+
+CREATE PROCEDURE `spAddTest` (IN `pID` INT, IN `tID` INT, IN `tStart` DATE, IN `uID` INT)  NO SQL
+BEGIN
+	INSERT INTO patientassignedtotest(patientID, testID, assignDate, assignDateStart, userID) VALUES (pID, tID, NOW(), tStart, uID);
+END$$
+
+CREATE  PROCEDURE `spAddTreatment` (IN `pID` INT, IN `tID` INT, IN `tStart` DATE, IN `inst` VARCHAR(255), IN `uID` INT)  NO SQL
+BEGIN
+	INSERT INTO patientassignedtotreatment (patientID, treatmentID, assignDate, assignDateStart, instructions, userID) VALUES (pID, tID, NOW(), tStart, inst, uID);
+END$$
+
+CREATE PROCEDURE `spAdmitPatient` (IN `ID` INT)  NO SQL
+BEGIN
+	INSERT INTO patienthistory (patientID, admittedDate) VALUES (ID, NOW());
+END$$
+
+CREATE PROCEDURE `spReleasePatient` (IN `ID` INT)  NO SQL
+BEGIN
+	UPDATE room 
+    SET patientsAssigned = patientsAssigned - 1
+    WHERE roomNumber = (SELECT roomNumber FROM patient WHERE patientID = ID);
+    UPDATE patient 
+    SET roomNumber = NULL 
+    WHERE patientID = ID;
+    UPDATE patienthistory
+    SET dischargeDate = NOW()
+    WHERE patientID = ID AND admittedDate = (SELECT MAX(admittedDate) FROM patienthistory WHERE patientID = ID);
+END$$
+
+CREATE PROCEDURE `spUpdatePatient` (IN `ID` INT, IN `fName` VARCHAR(255), IN `lName` VARCHAR(255), IN `RM` INT)  NO SQL
+BEGIN
+	UPDATE patient 
+    SET firstName = fName, lastName = lName
+	WHERE patientID = ID;
+    
+	CALL spUpdatePatientRoom(ID, RM);
+END$$
+
+CREATE PROCEDURE `spUpdatePatientRoom` (IN `ID` INT, IN `RN` INT)  NO SQL
+BEGIN
+	IF((SELECT patientsAssigned FROM room WHERE roomNumber = RN) < (SELECT maxCapacity FROM room WHERE roomNumber = RN)) THEN
+    	UPDATE room
+        SET patientsAssigned = patientsAssigned - 1
+        WHERE roomNumber = (SELECT roomNumber FROM patient WHERE patientID = ID);
+		UPDATE room 
+    	SET patientsAssigned = patientsAssigned + 1
+    	WHERE roomNumber = RN;
+    	UPDATE patient 
+    	SET roomNumber = RN 
+    	WHERE patientID = ID;
+    	-- SET Stat = "Patient room updated";
+    -- ELSE
+    	-- SET Stat = "Patient room has not been updated. Room at max capacity";
+    END IF;
+END$$
+
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -50,6 +132,19 @@ INSERT INTO `department` (`departmentID`, `departmentName`) VALUES
 (10, 'Accident and Emergency'),
 (11, 'Radiotherapy'),
 (12, 'Intensive Care');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `diagnosis`
+--
+
+CREATE TABLE `diagnosis` (
+  `patientID` int(11) NOT NULL,
+  `userID` int(11) NOT NULL,
+  `diagnosis` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `dateAssigned` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -89,11 +184,11 @@ CREATE TABLE `drug` (
 --
 
 INSERT INTO `drug` (`drugID`, `medicineName`, `baseDose`, `warning`, `description`) VALUES
-(1, 'first medicine', '0.7', 'First warning', 'This is medicine #1'),
-(2, 'second medicine', '0.8', 'second warning', 'This is medicine #2'),
-(3, 'Third medicine', '0.9', 'Third warning', 'This is medicine #3'),
-(4, 'Fourth medicine', '1.0', 'Fourth warning', 'This is medicine #4'),
-(5, 'Fifth medicine', '2.3', 'Fifth warning', 'This is medicine #5');
+(1, 'Oxycodone', '0.7', 'Can cause breathing problems, stomach pain, and drowsiness.', 'Used to treat moderate to severe pain.'),
+(2, 'Xanax', '0.8', 'Can cause fatigue, headaches, and dizziness.', 'Used to treat anxiety and panic disorder.'),
+(3, 'Ibuprofen', '0.9', 'Can cause bloating, rashs, and vomiting.', 'Used to treat fever and pain.'),
+(4, 'Diazepam', '1.0', 'Can cause suicidal tought, muscle weakness, and tremor.', 'Used to treat anxiety and muscle spasms.'),
+(5, 'Klonopin', '2.3', 'Can cause depression, drowsiness, headaches.', 'Used to treat seizures and panic disorder.');
 
 -- --------------------------------------------------------
 
@@ -113,14 +208,14 @@ CREATE TABLE `patient` (
 --
 
 INSERT INTO `patient` (`patientID`, `firstName`, `lastName`, `roomNumber`) VALUES
-(1, 'Joe', 'Dough', 104),
-(2, 'Nicky', 'Cagey', NULL),
-(10, 'Lord', 'Farquaad', 101),
+(1, 'Joe', 'Dough', NULL),
+(2, 'Nicky', 'Cagey', 220),
+(10, 'Lord', 'Farquaad', 210),
 (11, 'Shrek', 'Ogre', NULL),
 (13, 'Shaq', 'Kazaam', NULL),
 (14, 'Jon', 'Dough', 101),
-(18, 'Jane', 'Doe', 301),
-(19, 'Jerry', 'Smith', 301),
+(18, 'Jane', 'Doe', NULL),
+(19, 'Jerry', 'Smith', NULL),
 (21, 'Uuuhhhhgg', 'Buuuhh', 300),
 (22, 'Invalido', 'Roomguy', NULL),
 (23, 'Joe', 'Smo', 300),
@@ -128,10 +223,14 @@ INSERT INTO `patient` (`patientID`, `firstName`, `lastName`, `roomNumber`) VALUE
 (27, 'Nimda', 'Admin', NULL),
 (28, 'Steve', 'Brule', 160),
 (29, 'Jeff', 'Golden', NULL),
-(30, 'asd', 'abc', 100),
+(30, 'asd', 'abc', 102),
 (31, 'Test', 'Name', NULL),
 (32, 'Billy', 'Joel', NULL),
-(33, 'Jess', 'Smith', 102);
+(33, 'Jess', 'Smith', 102),
+(34, 'Jamie', 'Lynn', 331),
+(35, 'Barbara ', 'Zate ', NULL),
+(36, 'Paul', 'Chen', NULL),
+(37, 'Hess', 'Ham', NULL);
 
 --
 -- Triggers `patient`
@@ -154,17 +253,26 @@ CREATE TABLE `patientassignedtotest` (
   `testID` int(11) NOT NULL,
   `assignDate` date DEFAULT NULL,
   `assignDateStart` date DEFAULT NULL,
-  `testResult` varchar(200) COLLATE utf8_unicode_ci DEFAULT NULL
+  `testResult` varchar(200) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `userID` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 --
 -- Dumping data for table `patientassignedtotest`
 --
 
-INSERT INTO `patientassignedtotest` (`patientID`, `testID`, `assignDate`, `assignDateStart`, `testResult`) VALUES
-(1, 1, '2019-02-02', '2019-02-15', 'Healthy'),
-(2, 2, NULL, NULL, NULL),
-(13, 5, '2019-04-07', '2019-04-07', 'Bad Actor');
+INSERT INTO `patientassignedtotest` (`patientID`, `testID`, `assignDate`, `assignDateStart`, `testResult`, `userID`) VALUES
+(1, 1, '2019-02-02', '2019-02-15', 'This patient is Healthy', 4),
+(1, 4, '2019-04-14', '2019-04-12', 'Negative', 4),
+(2, 2, NULL, NULL, NULL, 4),
+(13, 5, '2019-04-07', '2019-04-07', 'Bad Actor', 4),
+(18, 1, '2019-04-14', '2019-03-31', 'A', 4),
+(19, 4, '2019-04-15', '2019-04-16', 'Fail', 4),
+(21, 1, '2019-04-14', '2019-04-16', NULL, 4),
+(23, 1, '2019-04-14', '2019-04-17', 'Positive', 4),
+(28, 1, '2019-04-15', '2019-04-17', 'PASS', 4),
+(30, 1, '2019-04-17', '2019-04-18', NULL, 4),
+(30, 2, '2019-04-17', '2019-04-18', NULL, 4);
 
 -- --------------------------------------------------------
 
@@ -177,17 +285,21 @@ CREATE TABLE `patientassignedtotreatment` (
   `treatmentID` int(11) NOT NULL,
   `assignDate` date DEFAULT NULL,
   `assignDateStart` date DEFAULT NULL,
-  `recommendedAmount` decimal(20,1) NOT NULL
+  `instructions` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `userID` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 --
 -- Dumping data for table `patientassignedtotreatment`
 --
 
-INSERT INTO `patientassignedtotreatment` (`patientID`, `treatmentID`, `assignDate`, `assignDateStart`, `recommendedAmount`) VALUES
-(1, 1, '2019-02-20', '2019-02-25', '1.5'),
-(2, 2, NULL, NULL, '0.0'),
-(13, 2, '2019-04-07', '2019-04-10', '10.0');
+INSERT INTO `patientassignedtotreatment` (`patientID`, `treatmentID`, `assignDate`, `assignDateStart`, `instructions`, `userID`) VALUES
+(1, 1, '2019-02-20', '2019-02-25', '1.5', NULL),
+(2, 2, NULL, NULL, '0.0', NULL),
+(13, 2, '2019-04-07', '2019-04-10', '10.0', NULL),
+(19, 1, '2019-04-15', '2019-04-14', '2', 4),
+(28, 1, '2019-04-14', '2019-04-15', 'i', 4),
+(30, 3, '2019-04-14', '2019-04-10', '\'Change bandage\'', 4);
 
 -- --------------------------------------------------------
 
@@ -212,10 +324,10 @@ INSERT INTO `patienthistory` (`patientID`, `admittedDate`, `dischargeDate`) VALU
 (2, '2019-03-31 17:44:55', '2019-03-31 17:50:20'),
 (1, '2019-03-01 00:00:00', '2019-03-02 00:00:00'),
 (1, '2019-03-01 00:00:00', '2019-03-02 00:00:00'),
-(1, '2019-03-06 00:00:00', '2019-03-09 00:00:00'),
+(1, '2019-03-06 00:00:00', '2019-04-17 04:19:49'),
 (13, '2019-03-31 18:01:02', NULL),
 (13, '2019-03-31 18:01:10', '2019-03-31 18:01:27'),
-(10, '2019-04-01 00:45:45', NULL),
+(10, '2019-04-01 00:45:45', '2019-04-17 03:17:27'),
 (11, '2019-04-01 00:00:00', NULL),
 (29, '2019-04-01 20:12:55', NULL),
 (30, '2019-04-07 05:48:34', NULL),
@@ -223,40 +335,14 @@ INSERT INTO `patienthistory` (`patientID`, `admittedDate`, `dischargeDate`) VALU
 (1, '2018-03-01 00:00:00', NULL),
 (1, '2018-03-01 00:00:00', NULL),
 (32, '2019-04-08 00:09:20', NULL),
-(33, '2019-04-08 15:03:10', NULL);
-
--- --------------------------------------------------------
-
---
--- Table structure for table `prescription`
---
-
-CREATE TABLE `prescription` (
-  `doctorOrderNumber` int(11) NOT NULL,
-  `drugID` int(11) NOT NULL,
-  `dose` decimal(20,1) NOT NULL,
-  `timesPerDay` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-
---
--- Dumping data for table `prescription`
---
-
-INSERT INTO `prescription` (`doctorOrderNumber`, `drugID`, `dose`, `timesPerDay`) VALUES
-(1, 1, '0.0', 0),
-(2, 2, '0.0', 0),
-(3, 2, '10.0', 2),
-(4, 2, '10.0', 3),
-(5, 2, '10.0', 1),
-(6, 4, '9.0', 4),
-(7, 2, '5.0', 5),
-(8, 3, '4.0', 2),
-(9, 2, '1.0', 2),
-(10, 2, '1.0', 2),
-(11, 5, '0.0', 2),
-(12, 5, '5.0', 4),
-(13, 3, '1.0', 1),
-(14, 1, '30.0', 2);
+(33, '2019-04-08 15:03:10', NULL),
+(34, '2019-04-15 01:11:30', NULL),
+(35, '2019-04-15 01:11:51', NULL),
+(36, '2019-04-16 03:05:44', '2019-04-17 14:55:01'),
+(37, '2019-04-16 03:10:29', '2019-04-17 03:22:26'),
+(1, '2019-04-17 04:20:03', '2019-04-17 04:21:38'),
+(1, '2019-04-17 04:21:48', '2019-04-17 12:48:04'),
+(36, '2019-04-17 14:55:41', '2019-04-17 16:07:56');
 
 -- --------------------------------------------------------
 
@@ -265,29 +351,36 @@ INSERT INTO `prescription` (`doctorOrderNumber`, `drugID`, `dose`, `timesPerDay`
 --
 
 CREATE TABLE `prescriptionassignedtopatient` (
-  `doctorOrderNumber` int(11) NOT NULL,
+  `drugID` int(11) NOT NULL,
   `patientID` int(11) NOT NULL,
   `assignDateStart` date DEFAULT NULL,
-  `assignDateEnd` date DEFAULT NULL
+  `assignDateEnd` date DEFAULT NULL,
+  `userID` int(11) DEFAULT NULL,
+  `dose` decimal(10,0) NOT NULL,
+  `timesPerDay` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 --
 -- Dumping data for table `prescriptionassignedtopatient`
 --
 
-INSERT INTO `prescriptionassignedtopatient` (`doctorOrderNumber`, `patientID`, `assignDateStart`, `assignDateEnd`) VALUES
-(1, 1, '2019-03-01', '2019-04-01'),
-(2, 2, NULL, NULL),
-(5, 13, '2019-04-09', '2019-04-10'),
-(6, 1, '2019-04-09', '2019-04-17'),
-(7, 1, '2019-04-09', '0000-00-00'),
-(8, 2, '2019-04-09', '2019-04-30'),
-(9, 33, '2019-04-09', '2019-04-15'),
-(10, 33, '2019-04-09', '2019-04-15'),
-(11, 1, '2019-04-09', '2022-01-02'),
-(12, 1, '2019-04-09', '2019-04-25'),
-(13, 23, '2019-04-10', '2019-04-23'),
-(14, 18, '2019-04-10', '2019-04-18');
+INSERT INTO `prescriptionassignedtopatient` (`drugID`, `patientID`, `assignDateStart`, `assignDateEnd`, `userID`, `dose`, `timesPerDay`) VALUES
+(1, 1, '2019-03-01', '2019-04-01', 4, '0', 0),
+(1, 28, '2019-04-14', '2019-04-16', 4, '2', 2),
+(1, 30, '2019-04-17', '2019-04-20', 4, '5', 2),
+(2, 2, NULL, NULL, 4, '0', 0),
+(2, 28, '2019-04-15', '2019-04-15', 4, '3', 3),
+(2, 30, '2019-04-17', '2019-04-19', 4, '4', 1),
+(5, 13, '2019-04-09', '2019-04-10', 4, '0', 0),
+(6, 1, '2019-04-09', '2019-04-17', 4, '0', 0),
+(7, 1, '2019-04-09', '0000-00-00', 4, '0', 0),
+(8, 2, '2019-04-09', '2019-04-30', 4, '0', 0),
+(9, 33, '2019-04-09', '2019-04-15', 4, '0', 0),
+(10, 33, '2019-04-09', '2019-04-15', 4, '0', 0),
+(11, 1, '2019-04-09', '2022-01-02', 4, '0', 0),
+(12, 1, '2019-04-09', '2019-04-25', 4, '0', 0),
+(13, 23, '2019-04-10', '2019-04-23', 4, '0', 0),
+(14, 18, '2019-04-10', '2019-04-18', 4, '0', 0);
 
 -- --------------------------------------------------------
 
@@ -308,12 +401,12 @@ CREATE TABLE `room` (
 --
 
 INSERT INTO `room` (`roomNumber`, `departmentID`, `description`, `maxCapacity`, `patientsAssigned`) VALUES
-(100, 9, '4 bed room on the first floor', 4, 3),
-(101, 9, '4 bed room on the first floor', 4, 4),
-(102, 9, '4 bed room on the first floor', 4, 1),
+(100, 9, '4 bed room on the first floor', 4, 0),
+(101, 9, '4 bed room on the first floor', 4, 1),
+(102, 9, '4 bed room on the first floor', 4, 2),
 (103, 9, '4 bed room on the first floor', 4, 0),
-(104, 9, '4 bed room on the first floor', 4, 1),
-(105, 9, '4 bed room on the first floor', 4, 2),
+(104, 9, '4 bed room on the first floor', 4, 0),
+(105, 9, '4 bed room on the first floor', 4, 0),
 (110, 12, '2 bed room on the first floor', 2, 0),
 (111, 12, '2 bed room on the first floor', 2, 0),
 (112, 12, '2 bed room on the first floor', 2, 0),
@@ -346,18 +439,18 @@ INSERT INTO `room` (`roomNumber`, `departmentID`, `description`, `maxCapacity`, 
 (203, 1, '2 bed room on the second floor', 2, 0),
 (204, 1, '2 bed room on the second floor', 2, 0),
 (205, 1, '2 bed room on the second floor', 2, 0),
-(210, 2, '2 bed room on the second floor', 2, 0),
+(210, 2, '2 bed room on the second floor', 2, 1),
 (211, 2, '2 bed room on the second floor', 2, 0),
 (212, 2, '2 bed room on the second floor', 2, 0),
 (213, 2, '2 bed room on the second floor', 2, 0),
 (214, 2, '2 bed room on the second floor', 2, 0),
-(220, 3, '4 bed room on the second floor', 4, 0),
+(220, 3, '4 bed room on the second floor', 4, 1),
 (221, 3, '4 bed room on the second floor', 4, 0),
 (222, 3, '4 bed room on the second floor', 4, 0),
 (223, 3, '4 bed room on the second floor', 4, 0),
 (224, 3, '4 bed room on the second floor', 4, 0),
 (300, 5, '2 bed room on the third floor', 2, 2),
-(301, 5, '2 bed room on the third floor', 2, 2),
+(301, 5, '2 bed room on the third floor', 2, 0),
 (302, 5, '2 bed room on the third floor', 2, 0),
 (303, 5, '2 bed room on the third floor', 2, 0),
 (304, 5, '2 bed room on the third floor', 2, 0),
@@ -372,7 +465,7 @@ INSERT INTO `room` (`roomNumber`, `departmentID`, `description`, `maxCapacity`, 
 (323, 7, '2 bed room on the third floor', 2, 0),
 (324, 7, '2 bed room on the third floor', 2, 0),
 (330, 8, '4 bed room on the third floor', 4, 0),
-(331, 8, '4 bed room on the third floor', 4, 0),
+(331, 8, '4 bed room on the third floor', 4, 1),
 (332, 8, '4 bed room on the third floor', 4, 0),
 (333, 8, '4 bed room on the third floor', 4, 0),
 (334, 8, '4 bed room on the third floor', 4, 0),
@@ -399,11 +492,11 @@ CREATE TABLE `test` (
 --
 
 INSERT INTO `test` (`testID`, `testName`) VALUES
-(1, 'Test1'),
-(2, 'Test2'),
-(3, 'test3'),
-(4, 'test4'),
-(5, 'test5');
+(1, 'Cystoscopy Test'),
+(2, 'Responsive Test'),
+(3, 'Kidney Function Test'),
+(4, 'Allergy Test'),
+(5, 'Blood Test');
 
 -- --------------------------------------------------------
 
@@ -421,11 +514,11 @@ CREATE TABLE `treatment` (
 --
 
 INSERT INTO `treatment` (`treatmentID`, `treatmentName`) VALUES
-(1, 'treatment1'),
-(2, 'treatment2'),
-(3, 'treatment3'),
-(4, 'treatment4'),
-(5, 'treatment5');
+(1, 'Fluticasone Propionate'),
+(2, 'Clearasil'),
+(3, 'Neutrogena'),
+(4, 'Donepezil'),
+(5, 'Flonase');
 
 -- --------------------------------------------------------
 
@@ -496,6 +589,13 @@ ALTER TABLE `department`
   ADD PRIMARY KEY (`departmentID`);
 
 --
+-- Indexes for table `diagnosis`
+--
+ALTER TABLE `diagnosis`
+  ADD PRIMARY KEY (`patientID`,`userID`) USING BTREE,
+  ADD KEY `FK_user` (`userID`);
+
+--
 -- Indexes for table `doctorassignedtopatient`
 --
 ALTER TABLE `doctorassignedtopatient`
@@ -536,18 +636,12 @@ ALTER TABLE `patienthistory`
   ADD KEY `patientID` (`patientID`) USING BTREE;
 
 --
--- Indexes for table `prescription`
---
-ALTER TABLE `prescription`
-  ADD PRIMARY KEY (`doctorOrderNumber`),
-  ADD KEY `FK_drugID` (`drugID`);
-
---
 -- Indexes for table `prescriptionassignedtopatient`
 --
 ALTER TABLE `prescriptionassignedtopatient`
-  ADD PRIMARY KEY (`doctorOrderNumber`,`patientID`),
-  ADD KEY `prescriptionassignedtopatient_patientID_FK` (`patientID`);
+  ADD PRIMARY KEY (`drugID`,`patientID`) USING BTREE,
+  ADD KEY `prescriptionassignedtopatient_patientID_FK` (`patientID`),
+  ADD KEY `drug_FK` (`drugID`);
 
 --
 -- Indexes for table `room`
@@ -595,13 +689,7 @@ ALTER TABLE `drug`
 -- AUTO_INCREMENT for table `patient`
 --
 ALTER TABLE `patient`
-  MODIFY `patientID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
-
---
--- AUTO_INCREMENT for table `prescription`
---
-ALTER TABLE `prescription`
-  MODIFY `doctorOrderNumber` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `patientID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `room`
@@ -665,16 +753,9 @@ ALTER TABLE `patienthistory`
   ADD CONSTRAINT `FK_patientHistory_patientID` FOREIGN KEY (`patientID`) REFERENCES `patient` (`patientID`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
--- Constraints for table `prescription`
---
-ALTER TABLE `prescription`
-  ADD CONSTRAINT `FK_drugID` FOREIGN KEY (`drugID`) REFERENCES `drug` (`drugID`) ON DELETE NO ACTION ON UPDATE NO ACTION;
-
---
 -- Constraints for table `prescriptionassignedtopatient`
 --
 ALTER TABLE `prescriptionassignedtopatient`
-  ADD CONSTRAINT `prescriptionassignedtopatient_doctorOrderNumber_FK` FOREIGN KEY (`doctorOrderNumber`) REFERENCES `prescription` (`doctorOrderNumber`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `prescriptionassignedtopatient_patientID_FK` FOREIGN KEY (`patientID`) REFERENCES `patient` (`patientID`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
