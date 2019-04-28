@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Apr 17, 2019 at 11:50 PM
+-- Generation Time: Apr 28, 2019 at 05:38 PM
 -- Server version: 10.3.14-MariaDB
 -- PHP Version: 7.3.2
 
@@ -26,6 +26,11 @@ DELIMITER $$
 --
 -- Procedures
 --
+CREATE PROCEDURE `spAddDiagnosis` (IN `uID` INT, IN `pID` INT, IN `diag` VARCHAR(255), IN `notes` VARCHAR(255))  NO SQL
+BEGIN
+	INSERT INTO diagnosis(patientID, userID, diagnosis, doctorNotes, dateAssigned) VALUES (pID, uID, diag, notes, NOW());
+END$$
+
 CREATE PROCEDURE `spAddPatient` (IN `FN` VARCHAR(35), IN `LN` VARCHAR(35), IN `RN` INT)  NO SQL
 BEGIN
 	IF EXISTS (SELECT roomNumber FROM room WHERE RoomNumber = RN)THEN
@@ -52,7 +57,7 @@ BEGIN
 	INSERT INTO patientassignedtotest(patientID, testID, assignDate, assignDateStart, userID) VALUES (pID, tID, NOW(), tStart, uID);
 END$$
 
-CREATE  PROCEDURE `spAddTreatment` (IN `pID` INT, IN `tID` INT, IN `tStart` DATE, IN `inst` VARCHAR(255), IN `uID` INT)  NO SQL
+CREATE PROCEDURE `spAddTreatment` (IN `pID` INT, IN `tID` INT, IN `tStart` DATE, IN `inst` VARCHAR(255), IN `uID` INT)  NO SQL
 BEGIN
 	INSERT INTO patientassignedtotreatment (patientID, treatmentID, assignDate, assignDateStart, instructions, userID) VALUES (pID, tID, NOW(), tStart, inst, uID);
 END$$
@@ -74,6 +79,9 @@ BEGIN
     SET dischargeDate = NOW()
     WHERE patientID = ID AND admittedDate = (SELECT MAX(admittedDate) FROM patienthistory WHERE patientID = ID);
 END$$
+
+CREATE PROCEDURE `spSelectLastDischarge` (IN `ID` INT)  NO SQL
+SELECT MAX(dischargeDate) FROM patientHistory WHERE patientID = ID$$
 
 CREATE PROCEDURE `spUpdatePatient` (IN `ID` INT, IN `fName` VARCHAR(255), IN `lName` VARCHAR(255), IN `RM` INT)  NO SQL
 BEGIN
@@ -143,8 +151,23 @@ CREATE TABLE `diagnosis` (
   `patientID` int(11) NOT NULL,
   `userID` int(11) NOT NULL,
   `diagnosis` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `dateAssigned` date NOT NULL
+  `doctorNotes` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `dateAssigned` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+--
+-- Dumping data for table `diagnosis`
+--
+
+INSERT INTO `diagnosis` (`patientID`, `userID`, `diagnosis`, `doctorNotes`, `dateAssigned`) VALUES
+(1, 4, 'Frostbite', 'Patient was left in the freezing water for 3 hours, leading to full body frost bite', '2019-02-25 00:00:00'),
+(2, 4, 'Anxiety', NULL, '2019-03-25 00:00:00'),
+(10, 4, 'Heart Failure', NULL, '2019-04-22 17:51:43'),
+(14, 4, 'Liver Failure', NULL, '2019-04-22 17:45:50'),
+(30, 4, 'Ruptured Spleen', 'Due to car accident, patient was punctured by a broken fence.', '2019-04-22 19:49:53'),
+(48, 4, 'Abdominal pain', 'Unknown pain in stomach/intestine area', '2019-04-23 00:09:11'),
+(53, 4, 'Newborn jaundice', 'Yellowing of skin', '2019-04-23 00:22:17'),
+(54, 4, 'broken femur', 'car accident', '2019-04-24 15:22:59');
 
 -- --------------------------------------------------------
 
@@ -208,17 +231,17 @@ CREATE TABLE `patient` (
 --
 
 INSERT INTO `patient` (`patientID`, `firstName`, `lastName`, `roomNumber`) VALUES
-(1, 'Joe', 'Dough', NULL),
-(2, 'Nicky', 'Cagey', 220),
+(1, 'Joe', 'Dough', 131),
+(2, 'Nicky', 'Cagey', NULL),
 (10, 'Lord', 'Farquaad', 210),
-(11, 'Shrek', 'Ogre', NULL),
+(11, 'Shrek', 'Ogre', 302),
 (13, 'Shaq', 'Kazaam', NULL),
 (14, 'Jon', 'Dough', 101),
 (18, 'Jane', 'Doe', NULL),
 (19, 'Jerry', 'Smith', NULL),
 (21, 'Uuuhhhhgg', 'Buuuhh', 300),
 (22, 'Invalido', 'Roomguy', NULL),
-(23, 'Joe', 'Smo', 300),
+(23, 'Joe', 'Smo', 302),
 (26, 'John', 'Smith', NULL),
 (27, 'Nimda', 'Admin', NULL),
 (28, 'Steve', 'Brule', 160),
@@ -230,7 +253,24 @@ INSERT INTO `patient` (`patientID`, `firstName`, `lastName`, `roomNumber`) VALUE
 (34, 'Jamie', 'Lynn', 331),
 (35, 'Barbara ', 'Zate ', NULL),
 (36, 'Paul', 'Chen', NULL),
-(37, 'Hess', 'Ham', NULL);
+(37, 'Hess', 'Ham', NULL),
+(38, 'Noah', 'Rawlings', 130),
+(39, 'Nicole', 'Dyer', 130),
+(40, 'Justin', 'Steele', 130),
+(41, 'Ryan', 'Wormald', 130),
+(42, 'Gordon', 'Freeman', 131),
+(43, 'Adrian', 'Chambers', 341),
+(44, 'Kim', '	Gardner', 171),
+(45, 'Leah', 'Klein', 150),
+(46, 'Leah', 'Klein', 150),
+(47, 'Aaron', 'Hanks', 331),
+(48, 'Charlie', 'Kelly', 172),
+(49, 'Leah', 'Klein', NULL),
+(50, 'Francis', 'Brady', 132),
+(51, 'Dana', 'Carroll', 224),
+(52, 'Gabriel', 'Lopez', 211),
+(53, 'Lille', 'Page', 160),
+(54, 'nick', 'alpha', 131);
 
 --
 -- Triggers `patient`
@@ -272,7 +312,8 @@ INSERT INTO `patientassignedtotest` (`patientID`, `testID`, `assignDate`, `assig
 (23, 1, '2019-04-14', '2019-04-17', 'Positive', 4),
 (28, 1, '2019-04-15', '2019-04-17', 'PASS', 4),
 (30, 1, '2019-04-17', '2019-04-18', NULL, 4),
-(30, 2, '2019-04-17', '2019-04-18', NULL, 4);
+(30, 2, '2019-04-17', '2019-04-18', NULL, 4),
+(54, 3, '2019-04-24', '2019-04-30', NULL, 4);
 
 -- --------------------------------------------------------
 
@@ -294,12 +335,13 @@ CREATE TABLE `patientassignedtotreatment` (
 --
 
 INSERT INTO `patientassignedtotreatment` (`patientID`, `treatmentID`, `assignDate`, `assignDateStart`, `instructions`, `userID`) VALUES
-(1, 1, '2019-02-20', '2019-02-25', '1.5', NULL),
-(2, 2, NULL, NULL, '0.0', NULL),
-(13, 2, '2019-04-07', '2019-04-10', '10.0', NULL),
+(1, 1, '2019-02-20', '2019-02-25', '1.5', 4),
+(2, 2, NULL, NULL, '0.0', 4),
+(13, 2, '2019-04-07', '2019-04-10', '10.0', 4),
 (19, 1, '2019-04-15', '2019-04-14', '2', 4),
 (28, 1, '2019-04-14', '2019-04-15', 'i', 4),
-(30, 3, '2019-04-14', '2019-04-10', '\'Change bandage\'', 4);
+(30, 3, '2019-04-14', '2019-04-10', '\'Change bandage\'', 4),
+(38, 1, '2019-04-28', '2017-01-17', 'Take it', 4);
 
 -- --------------------------------------------------------
 
@@ -321,7 +363,7 @@ INSERT INTO `patienthistory` (`patientID`, `admittedDate`, `dischargeDate`) VALU
 (28, '2019-03-31 00:00:00', '2019-03-31 17:57:27'),
 (28, '2019-03-31 00:00:00', '2019-03-31 17:57:27'),
 (2, '2019-03-31 00:00:00', '2019-03-31 17:50:20'),
-(2, '2019-03-31 17:44:55', '2019-03-31 17:50:20'),
+(2, '2019-03-31 17:44:55', '2019-04-24 15:32:02'),
 (1, '2019-03-01 00:00:00', '2019-03-02 00:00:00'),
 (1, '2019-03-01 00:00:00', '2019-03-02 00:00:00'),
 (1, '2019-03-06 00:00:00', '2019-04-17 04:19:49'),
@@ -342,7 +384,27 @@ INSERT INTO `patienthistory` (`patientID`, `admittedDate`, `dischargeDate`) VALU
 (37, '2019-04-16 03:10:29', '2019-04-17 03:22:26'),
 (1, '2019-04-17 04:20:03', '2019-04-17 04:21:38'),
 (1, '2019-04-17 04:21:48', '2019-04-17 12:48:04'),
-(36, '2019-04-17 14:55:41', '2019-04-17 16:07:56');
+(36, '2019-04-17 14:55:41', '2019-04-17 16:07:56'),
+(1, '2019-04-18 00:09:50', '2019-04-18 18:51:45'),
+(38, '2019-04-18 02:29:26', NULL),
+(39, '2019-04-18 02:29:43', NULL),
+(40, '2019-04-18 02:30:00', NULL),
+(41, '2019-04-18 02:30:23', NULL),
+(42, '2019-04-18 02:31:31', NULL),
+(1, '2019-04-18 18:51:53', NULL),
+(43, '2019-04-22 23:12:12', NULL),
+(44, '2019-04-22 23:13:33', NULL),
+(45, '2019-04-22 23:14:10', NULL),
+(46, '2019-04-22 23:16:12', NULL),
+(47, '2019-04-22 23:16:37', NULL),
+(48, '2019-04-22 23:17:22', NULL),
+(49, '2019-04-23 00:04:11', NULL),
+(50, '2019-04-23 00:08:03', NULL),
+(51, '2019-04-23 00:11:32', NULL),
+(52, '2019-04-23 00:18:38', NULL),
+(53, '2019-04-23 00:21:16', NULL),
+(11, '2019-04-24 15:21:10', NULL),
+(54, '2019-04-24 15:22:23', NULL);
 
 -- --------------------------------------------------------
 
@@ -365,12 +427,14 @@ CREATE TABLE `prescriptionassignedtopatient` (
 --
 
 INSERT INTO `prescriptionassignedtopatient` (`drugID`, `patientID`, `assignDateStart`, `assignDateEnd`, `userID`, `dose`, `timesPerDay`) VALUES
-(1, 1, '2019-03-01', '2019-04-01', 4, '0', 0),
+(1, 1, '2019-03-01', '2019-04-01', 4, '4', 1),
 (1, 28, '2019-04-14', '2019-04-16', 4, '2', 2),
 (1, 30, '2019-04-17', '2019-04-20', 4, '5', 2),
 (2, 2, NULL, NULL, 4, '0', 0),
 (2, 28, '2019-04-15', '2019-04-15', 4, '3', 3),
 (2, 30, '2019-04-17', '2019-04-19', 4, '4', 1),
+(3, 1, '2019-04-24', '2019-04-29', 4, '2', 1),
+(4, 1, '2019-04-24', '2019-04-10', 4, '4', 2),
 (5, 13, '2019-04-09', '2019-04-10', 4, '0', 0),
 (6, 1, '2019-04-09', '2019-04-17', 4, '0', 0),
 (7, 1, '2019-04-09', '0000-00-00', 4, '0', 0),
@@ -417,20 +481,20 @@ INSERT INTO `room` (`roomNumber`, `departmentID`, `description`, `maxCapacity`, 
 (117, 12, '1 bed room on the first floor to avoid contamination', 1, 0),
 (118, 12, '1 bed room on the first floor to avoid contamination', 1, 0),
 (119, 12, '1 bed room on the first floor to avoid contamination', 1, 0),
-(130, 1, '4 bed room on the first floor', 4, 0),
-(131, 1, '4 bed room on the first floor', 4, 0),
-(132, 1, '4 bed room on the first floor', 4, 0),
+(130, 1, '4 bed room on the first floor', 4, 4),
+(131, 1, '4 bed room on the first floor', 4, 3),
+(132, 1, '4 bed room on the first floor', 4, 1),
 (133, 1, '4 bed room on the first floor', 4, 0),
 (134, 1, '4 bed room on the first floor', 4, 0),
-(150, 4, '2 bed room for maternity department', 2, 0),
+(150, 4, '2 bed room for maternity department', 2, 2),
 (151, 4, '2 bed room for maternity department', 2, 0),
 (152, 4, '2 bed room for maternity department', 2, 0),
 (153, 4, '2 bed room for maternity department', 2, 0),
 (154, 4, '2 bed room for maternity department', 2, 0),
-(160, 4, 'Nursery', 20, 0),
+(160, 4, 'Nursery', 20, 1),
 (170, 10, 'Waiting Area', 30, 0),
-(171, 10, '4 bed room for emergency', 4, 0),
-(172, 10, '4 bed room for emergency', 4, 0),
+(171, 10, '4 bed room for emergency', 4, 1),
+(172, 10, '4 bed room for emergency', 4, 1),
 (173, 10, '4 bed room for emergency', 4, 0),
 (174, 10, '4 bed room for emergency', 4, 0),
 (200, 1, '2 bed room on the second floor', 2, 0),
@@ -440,18 +504,18 @@ INSERT INTO `room` (`roomNumber`, `departmentID`, `description`, `maxCapacity`, 
 (204, 1, '2 bed room on the second floor', 2, 0),
 (205, 1, '2 bed room on the second floor', 2, 0),
 (210, 2, '2 bed room on the second floor', 2, 1),
-(211, 2, '2 bed room on the second floor', 2, 0),
+(211, 2, '2 bed room on the second floor', 2, 1),
 (212, 2, '2 bed room on the second floor', 2, 0),
 (213, 2, '2 bed room on the second floor', 2, 0),
 (214, 2, '2 bed room on the second floor', 2, 0),
-(220, 3, '4 bed room on the second floor', 4, 1),
+(220, 3, '4 bed room on the second floor', 4, 0),
 (221, 3, '4 bed room on the second floor', 4, 0),
 (222, 3, '4 bed room on the second floor', 4, 0),
 (223, 3, '4 bed room on the second floor', 4, 0),
-(224, 3, '4 bed room on the second floor', 4, 0),
-(300, 5, '2 bed room on the third floor', 2, 2),
+(224, 3, '4 bed room on the second floor', 4, 1),
+(300, 5, '2 bed room on the third floor', 2, 1),
 (301, 5, '2 bed room on the third floor', 2, 0),
-(302, 5, '2 bed room on the third floor', 2, 0),
+(302, 5, '2 bed room on the third floor', 2, 2),
 (303, 5, '2 bed room on the third floor', 2, 0),
 (304, 5, '2 bed room on the third floor', 2, 0),
 (310, 6, '2 bed room on the third floor', 2, 0),
@@ -465,12 +529,12 @@ INSERT INTO `room` (`roomNumber`, `departmentID`, `description`, `maxCapacity`, 
 (323, 7, '2 bed room on the third floor', 2, 0),
 (324, 7, '2 bed room on the third floor', 2, 0),
 (330, 8, '4 bed room on the third floor', 4, 0),
-(331, 8, '4 bed room on the third floor', 4, 1),
+(331, 8, '4 bed room on the third floor', 4, 2),
 (332, 8, '4 bed room on the third floor', 4, 0),
 (333, 8, '4 bed room on the third floor', 4, 0),
 (334, 8, '4 bed room on the third floor', 4, 0),
 (340, 11, '4 bed room on the third floor', 4, 0),
-(341, 11, '4 bed room on the third floor', 4, 0),
+(341, 11, '4 bed room on the third floor', 4, 1),
 (342, 11, '4 bed room on the third floor', 4, 0),
 (343, 11, '4 bed room on the third floor', 4, 0),
 (344, 11, '4 bed room on the third floor', 4, 0),
@@ -543,14 +607,14 @@ CREATE TABLE `user` (
 --
 
 INSERT INTO `user` (`userID`, `firstName`, `lastName`, `type`, `departmentID`, `password`, `salt1`, `salt2`, `userName`) VALUES
-(1, 'John', 'Scotti', 'nurse', NULL, 'd7a48a3ad42931789952965c0d36eff3', 'ntbUoTMiCw', 'DnCLhnBmnw', 'scotj6'),
-(2, 'John', 'Scotti', '', NULL, '6501c564c2b2f218c8f2aa907eefa5d2', 'nDuZVbmFZx', 'rJAWfWfOIQ', 'scotj8'),
-(4, 'Nimda', 'Admin', 'doctor', NULL, '7fee3e6ca55a0a5b6e9e220c5ea4abef', 'hXnANcKrEW', 'ApexClLVeg', 'admin'),
-(5, 'Danielle', 'Hyland', '', NULL, 'cc5cfe699fb67af71860e72ae48eb719', 'VPCyJLlDxO', 'YhxwfSEQxX', 'hylad7'),
-(6, 'Danielle', 'Hyland', '', NULL, 'e8cd6cd17d1ed854d0c7201f7f444139', 'UxpmSKVTbL', 'ThZDPoMXtJ', 'hylad8'),
-(7, 'John', 'Smith', '', NULL, 'b8f2fffa90e0d1e62660fd3f9cb427c3', 'gTRNxDhAnD', 'qWMePeurTK', 'smitj4'),
-(8, 'Danielle', 'Hyland', '', NULL, 'ef037ca03c6fd6a2cada104f3e1adc1a', 'iybOOikaQA', 'XoeNpXbFhs', 'hylad'),
-(9, 'Cee', 'Look', '', NULL, '0074cc486cf559c7fe82cc5fda51a1ee', 'tQtNNfFeCJ', 'LJKoZRwxqQ', 'lookc'),
+(1, 'John', 'Scotti', 'nurse', 3, 'd7a48a3ad42931789952965c0d36eff3', 'ntbUoTMiCw', 'DnCLhnBmnw', 'scotj6'),
+(2, 'John', 'Scotti', '', 2, '6501c564c2b2f218c8f2aa907eefa5d2', 'nDuZVbmFZx', 'rJAWfWfOIQ', 'scotj8'),
+(4, 'Nimda', 'Admin', 'doctor', 1, '7fee3e6ca55a0a5b6e9e220c5ea4abef', 'hXnANcKrEW', 'ApexClLVeg', 'admin'),
+(5, 'Danielle', 'Hyland', '', 7, 'cc5cfe699fb67af71860e72ae48eb719', 'VPCyJLlDxO', 'YhxwfSEQxX', 'hylad7'),
+(6, 'Danielle', 'Hyland', '', 12, 'e8cd6cd17d1ed854d0c7201f7f444139', 'UxpmSKVTbL', 'ThZDPoMXtJ', 'hylad8'),
+(7, 'John', 'Smith', '', 4, 'b8f2fffa90e0d1e62660fd3f9cb427c3', 'gTRNxDhAnD', 'qWMePeurTK', 'smitj4'),
+(8, 'Danielle', 'Hyland', '', 5, 'ef037ca03c6fd6a2cada104f3e1adc1a', 'iybOOikaQA', 'XoeNpXbFhs', 'hylad'),
+(9, 'Cee', 'Look', '', 8, '0074cc486cf559c7fe82cc5fda51a1ee', 'tQtNNfFeCJ', 'LJKoZRwxqQ', 'lookc'),
 (10, 'Cee', 'Look', 'doctor', 7, 'c99108bc448e32aba9050c5f0da7576f', 'kiqlInjKIa', 'SfDCksnVAF', 'lookc1'),
 (11, 'Jerry', 'Smith', 'nurse', 12, 'bafa15e548133e7750b2ac8c246f717e', 'xdXyffyicN', 'HvXukNrFCd', 'smitj'),
 (12, 'John', 'Smith', 'doctor', 3, 'd4e4192daa0e17428e604e74cdf8107b', 'RWRDYtcaes', 'HwsEUCPrgK', 'smitj1'),
@@ -576,7 +640,8 @@ INSERT INTO `user` (`userID`, `firstName`, `lastName`, `type`, `departmentID`, `
 (34, 'Danielle', 'admin', 'doctor', 1, '829005290dbb8db9f1ffecd0a9af62db', 'UZxMTPnRqL', 'KxhfArQCdv', 'admid2'),
 (35, 'Danielle', 'admin', 'doctor', 1, 'c2af319cc8ed6a4dfb0f8030837b2ca0', 'VkXfTWodTq', 'GWTYmGWrPd', 'admid3'),
 (36, 'Danielle', 'admin', 'doctor', 1, 'b1ab0141ec7e859adf304495faa9e734', 'AuPLnQbWvx', 'JjCkgNgBIy', 'admid4'),
-(37, 'Jerkface', 'admin', 'doctor', 1, 'f2b08ad8f903dbcbb165edc4bf0ffcc1', 'gcIkoQQrIG', 'obLptkXLxp', 'admij');
+(37, 'Jerkface', 'admin', 'doctor', 1, 'f2b08ad8f903dbcbb165edc4bf0ffcc1', 'gcIkoQQrIG', 'obLptkXLxp', 'admij'),
+(38, 'Test', 'Account', 'doctor', 7, '654fc5a675d502a596b7d9331caefa73', 'UqKsaGUcTW', 'mqnGaGmAfS', 'accot');
 
 --
 -- Indexes for dumped tables
@@ -689,7 +754,7 @@ ALTER TABLE `drug`
 -- AUTO_INCREMENT for table `patient`
 --
 ALTER TABLE `patient`
-  MODIFY `patientID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `patientID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
 
 --
 -- AUTO_INCREMENT for table `room`
@@ -713,7 +778,7 @@ ALTER TABLE `treatment`
 -- AUTO_INCREMENT for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `userID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `userID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- Constraints for dumped tables
