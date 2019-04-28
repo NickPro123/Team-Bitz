@@ -69,7 +69,9 @@ if (isset($_POST['drugID'])){
                         echo "$nameOfPatient[firstName] $nameOfPatient[lastName]";?></a>
                     <div class="dropdown-menu dropdown-primary" aria-labelledby="navbarDropdownMenuLink">
                         <a class="dropdown-item" href="viewPrescriptions.php">View Prescriptions</a>
-                        <a class="dropdown-item" href="addprescription.php">Add Prescriptions</a>
+                        <!-- <a class="dropdown-item" href="addprescription.php">Add Prescriptions</a> -->
+                        <a class="dropdown-item" href="viewCurrentDiagnosis.php">View Current Diagnosis</a>
+                        <a class="dropdown-item" href="adddiagnosis.php">Add Diagnosis</a>
                         <a class="dropdown-item" href="viewTests.php">View Tests</a>
                         <a class="dropdown-item" href="addtest.php">Add Test</a>
                         <a class="dropdown-item" href="viewTreatments.php">View Treatments</a>
@@ -107,7 +109,7 @@ if (isset($_POST['drugID'])){
     <!--    </nav> -->
 
   <header>
-    <a href="main.php">
+    <a>
       <img src="images/logo.png"  class="logo">
     </a>
   </header>

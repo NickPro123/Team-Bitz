@@ -5,29 +5,63 @@ if(!isset($_SESSION['user'])){
     header("Location:login.php");
 }
 
-if(isset($_POST['patientID']))
+if(!isset($_POST['deptID']))
 {
-    
+    $deptID = getUserDept($_SESSION['user']);
+}
+else
+{
+    $deptID = $_POST['deptID'];
 }
 
+//in the event that the user doesnt have a type, use the default(deptID = 1 or general care dept)
+if(!isset($deptID))
+{
+    $deptID = 1;
+}
+
+$showInactive = 0;
 if(isset($_POST['showInactive']))
 {
 	if($_POST['showInactive'] == "Show Discharged Patients")
 	{
-		$result = queryMysql("SELECT p.patientID, p.firstName, p.lastName, p.roomNumber 
+	    $showInactive = 1;
+	    $deptID = -1;
+		$result = queryMysql("SELECT p.patientID, p.firstName, p.lastName,  p.roomNumber, diag.diagnosis
 		                      FROM patient AS p
+		                      LEFT JOIN diagnosis AS diag
+		                      ON p.patientID = diag.patientID
 		                      WHERE p.roomNumber IS NULL");
 	}
 	
 	else
 	{
-    	$result = queryMysql("SELECT p.patientID, p.firstName, p.lastName, p.roomNumber, d.departmentID, d.departmentName 
-    	                      FROM patient AS p 
-	                          JOIN room AS r
-	                          ON p.roomNumber = r.roomNumber
-	                          JOIN department AS d
-	                          ON r.departmentID = d.departmentID    	                      
-    	                      WHERE p.roomNumber IS NOT NULL");
+	    if($deptID != -1)
+	    {
+	        $showInactive = 0;
+    	    $result = queryMysql("SELECT p.patientID, p.firstName, p.lastName, p.roomNumber, d.departmentID, d.departmentName, diag.diagnosis 
+    	                         FROM patient AS p 
+	                              JOIN room AS r
+	                            ON p.roomNumber = r.roomNumber
+	                             JOIN department AS d
+	                             ON r.departmentID = d.departmentID
+	                             LEFT JOIN diagnosis AS diag
+	                              ON p.patientID = diag.patientID
+    	                          WHERE p.roomNumber IS NOT NULL AND d.departmentID = ". $deptID);
+	    }
+	    else
+	    {
+	        $showInactive = 0;
+	        $result = queryMysql("SELECT p.patientID, p.firstName, p.lastName, p.roomNumber, d.departmentID, d.departmentName, diag.diagnosis 
+    	                         FROM patient AS p 
+	                              JOIN room AS r
+	                            ON p.roomNumber = r.roomNumber
+	                             JOIN department AS d
+	                             ON r.departmentID = d.departmentID
+	                             LEFT JOIN diagnosis AS diag
+	                              ON p.patientID = diag.patientID
+    	                          WHERE p.roomNumber IS NOT NULL");
+	    }
 	}
     
 }
@@ -35,22 +69,44 @@ else
 {
     if(!isset($_POST['patientID']))
     {
-        $result = queryMysql("SELECT p.patientID, p.firstName, p.lastName, p.roomNumber, d.departmentID, d.departmentName
-	                      FROM patient AS p 
-	                      JOIN room AS r
-	                      ON p.roomNumber = r.roomNumber
-	                      JOIN department AS d
-	                      ON r.departmentID = d.departmentID
-	                      WHERE p.roomNumber IS NOT NULL");
+        if($deptID != -1)
+	    {
+	        $showInactive = 0;
+    	    $result = queryMysql("SELECT p.patientID, p.firstName, p.lastName, p.roomNumber, d.departmentID, d.departmentName, diag.diagnosis 
+    	                         FROM patient AS p 
+	                              JOIN room AS r
+	                            ON p.roomNumber = r.roomNumber
+	                             JOIN department AS d
+	                             ON r.departmentID = d.departmentID
+	                             LEFT JOIN diagnosis AS diag
+	                              ON p.patientID = diag.patientID
+    	                          WHERE p.roomNumber IS NOT NULL AND d.departmentID = ". $deptID);
+	    }
+	    else
+	    {
+	        $showInactive = 0;
+	        $result = queryMysql("SELECT p.patientID, p.firstName, p.lastName, p.roomNumber, d.departmentID, d.departmentName, diag.diagnosis 
+    	                         FROM patient AS p 
+	                              JOIN room AS r
+	                            ON p.roomNumber = r.roomNumber
+	                             JOIN department AS d
+	                             ON r.departmentID = d.departmentID
+	                             LEFT JOIN diagnosis AS diag
+	                              ON p.patientID = diag.patientID
+    	                          WHERE p.roomNumber IS NOT NULL");
+	    }
     }
     else
     {
-        $result = queryMysql("SELECT p.patientID, p.firstName, p.lastName, p.roomNumber, d.departmentID, d.departmentName
+        $showInactive = 0;
+        $result = queryMysql("SELECT p.patientID, p.firstName, p.lastName, p.roomNumber, d.departmentID, d.departmentName, diag.diagnosis
 	                      FROM patient AS p 
 	                      JOIN room AS r
 	                      ON p.roomNumber = r.roomNumber
 	                      JOIN department AS d
 	                      ON r.departmentID = d.departmentID
+	                      LEFT JOIN diagnosis AS diag
+	                      ON p.patientID = diag.patientID
 	                      WHERE p.roomNumber IS NOT NULL AND p.patientID = ". $_POST['patientID']);
     }
 	
@@ -78,6 +134,40 @@ else
                 <li class="nav-item active">
                     <a class="nav-link" href="main.php">Main Menu<span class="sr-only">(current)</span></a>
                 </li>
+                <!-- Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" data-toggle="dropdown"
+                       aria-haspopup="true" aria-expanded="false">Change Dept</a>
+                    <div class="dropdown-menu dropdown-primary" aria-labelledby="navbarDropdownMenuLink">
+                        <form action="main.php" method="post" onsubmit="return true" >
+                            <button class="dropdown-item" name="deptID" value= -1  >Show All</button>
+                        <?php
+                            $deptResult = queryMysql("SELECT departmentID, departmentName FROM department");
+                            if($deptResult->num_rows > 0)
+                            {
+                                while($deptRow = mysqli_fetch_assoc($deptResult))
+                                {
+                                    if($deptID == $deptRow['departmentID'])
+                                    {
+                                        $deptName = $deptRow['departmentName'];
+                                    }
+                                    echo '<form action="main.php" method="post" onsubmit="return true" >';
+                                    
+                                    echo '<button class="dropdown-item" name="deptID" value='. $deptRow['departmentID'] .'  > '. $deptRow['departmentName'] .'</button>';
+                                    
+                                    echo '</form>';
+                                }
+                            }
+                        ?>
+                    </div>
+                </li>
+                <?php 
+                if(isset($deptName))
+                { ?>
+                <li class="nav-item active">
+                    <a class="nav-link">Current Dept: <?php echo $deptName; ?></a>
+                </li>
+                <?php } ?>
             </ul>
             <div class="form-inline my-2 ml-lg-2">
                 <form method='post' action='viewRoomInformation.php' onsubmit='return true'>
@@ -102,7 +192,8 @@ else
 <body>
     <div class="container">
         <div class="center">
-          <h1>Main Menu</h1>
+          <!-- <h1>Main Menu</h1> -->
+          <h1>┴┬┴┤( ͡° ͜ʖ├┬┴┬</h1>
           <!--Toggle active/discharged patients-->
           <div class="toggleInactivePatientDiv" style= "width: 50%;  margin-left: auto; margin-right: auto;">
 			  <form method="post" onsubmit="return true" action="main.php">
@@ -137,8 +228,20 @@ else
                     <select id="searchCat" class="form-control mt-0 h-100">
                         <option value=1>Patient ID</option>
                         <option value=2>First Name OR Last Name</option>
+                        <?php 
+                        if($showInactive == 0)
+                        { ?>
                         <option value=3>Room Number</option>
+                        <?php } ?>
+                        <?php 
+                        if($deptID == -1)
+                        { 
+                            if($showInactive == 0)
+                            { ?>
                         <option value=4>Department</option>
+                        <?php 
+                            }
+                        } ?>
                     </select>
                 </div>
             </div>
@@ -153,8 +256,21 @@ else
                 <th></th>
                 <th>ID</th>
                 <th>Name</th>
+                <?php 
+                if($showInactive == 0)
+                { ?>
                 <th>Room Number</th>
+                <?php } ?>
+                <?php 
+                if($deptID == -1)
+                { 
+                    if($showInactive == 0)
+                    { ?>
                 <th>Department</th>
+                <?php 
+                    }
+                } ?>
+                <th>Diagnosis</th>
                   <th></th>
               </tr>
               
@@ -165,6 +281,10 @@ else
                 {
                     $row['departmentID'] = "";
                     $row['departmentName'] = "";
+                }
+                if(!isset($row['diagnosis']))
+                {
+                    $row['diagnosis'] = "";
                 }
             ?>
             
@@ -177,14 +297,30 @@ else
 				 	 <input type='hidden' id="patientLName<?php echo $tableIndex ?>" value="<?php echo "$row[lastName]"; ?>" >
 					<a id="lNameTableVal<?php echo $tableIndex ?>"><?php echo "$row[lastName]";?></a>
 				</td>
+				<input type='hidden' id="patientRm<?php echo $tableIndex ?>" value="<?php echo "$row[roomNumber]"; ?>">
+				<?php 
+                if($showInactive == 0)
+                { ?>
                 <td>
-					<input type='hidden' id="patientRm<?php echo $tableIndex ?>" value="<?php echo "$row[roomNumber]"; ?>">
 					<a id="roomTableVal<?php echo $tableIndex ?>"><?php echo "$row[roomNumber]";?></a>
 				</td>
-				<td>
-				    <input type="hidden" id="patientDeptID<?php echo $tableIndex ?>" value="<?php echo "$row[departmentID]"; ?>">
+				<?php } ?>
+				<input type="hidden" id="patientDeptID<?php echo $tableIndex ?>" value="<?php echo "$row[departmentID]"; ?>">
 				    <input type='hidden' id="patientDept<?php echo $tableIndex ?>" value="<?php echo "$row[departmentName]"; ?>">
+				<?php 
+                if($deptID == -1)
+                { 
+                    if($showInactive == 0)
+                    { ?>
+				<td>
 				    <a id="deptTableVal<?php echo $tableIndex ?>"><?php echo "$row[departmentName]";?></a>
+				</td>
+				<?php 
+                    }
+				} ?>
+				<td>
+				    <input type="hidden" id="diagnosis<?php echo $tableIndex ?>" value="<?php echo "$row[diagnosis]"; ?>">
+				    <a id="diagnosisVal<?php echo $tableIndex ?>"><?php echo "$row[diagnosis]"; ?></a>
 				</td>
                 <td class="btnCol">
                       
@@ -206,15 +342,15 @@ else
                             <div class="form-row">
                                 <div class="col">
                                     <label for="detailPatientID">ID:</label>
-                                    <input type="text" id="detailPatientID" name="detailPatientID" readonly="readonly">
+                                    <input type="text" id="detailPatientID" class="form-control" name="detailPatientID" readonly="readonly">
                                 </div>
                                 <div class="col">
                                     <label for="detailPatientFName">First Name:</label>
-                                    <input type="text" id="detailPatientFName" name="detailPatientFName" readonly="readonly"><br>
+                                    <input type="text" id="detailPatientFName" class="form-control" name="detailPatientFName" readonly="readonly"><br>
                                 </div>
                                 <div class="col">
                                     <label for="detailPatientLName">Last Name:</label>
-                                    <input type="text" id="detailPatientLName" name="detailPatientLName" readonly="readonly"><br>
+                                    <input type="text" id="detailPatientLName" class="form-control" name="detailPatientLName" readonly="readonly"><br>
                                 </div>
                             </div>
                             <div class="form-row">
@@ -228,7 +364,7 @@ else
                                         {
                                             while ($row = mysqli_fetch_assoc($result))
                                             {
-                                                echo '<option value="'.$row['departmentID'].'"> '.$row['departmentID']. ' - ' .$row['departmentName'].'</option>';
+                                                echo '<option value="'.$row['departmentID'].'"> '.$row['departmentID']. ' | ' .$row['departmentName'].'</option>';
                                             }
                                         }
                                     ?>
@@ -243,6 +379,11 @@ else
                         </form>
                         <br>
                         <div class="row">
+                            <div class="col-lg" align="center">
+                                <form method="post" action="viewCurrentDiagnosis.php" onsubmit="return true">
+                                    <button id="diagnosisBtnDetail" name="patientID" class="btn btn-outline-success">Diagnosis</button>
+                                </form>
+                            </div>
                             <div class="col-lg" align="center">
                                 <form method='post' action="viewTests.php"  onsubmit='return true'>
                                     <button id="testBtnDetail" name="patientID" class="btn btn-outline-success">Tests</button>
@@ -398,6 +539,7 @@ else
 			roomMenuItem.value = patientRm.value;
 			
 			//Detail menu buttons to access tests, treatments, prescriptions and history
+			document.getElementById("diagnosisBtnDetail").value = patientID.value;
 			document.getElementById("testBtnDetail").value = patientID.value;
 			document.getElementById("treatmentBtnDetail").value = patientID.value;
 			document.getElementById("prescriptionBtnDetail").value = patientID.value;

@@ -69,8 +69,7 @@ require_once 'functions.php';
                 <div class="input-group-append">
                     <select id="searchCat" class="form-control mt-0 h-100">
                         <option value=1>Room Number</option>
-                        <option value=2>DepartmentID</option>
-                        <option value=3>Department Name</option>
+                        <option value=2>Department Name</option>
                     </select>
                 </div>
             </div>
@@ -79,13 +78,12 @@ require_once 'functions.php';
               <tr>
 				  <th></th>
                 <th>Room Number</th>
-                <th>Department ID</th>
                 
                 <th>Department Name</th>
 				<th>Room Description</th>
 				
                 <th>Max Capacity</th>
-                <th>Current Capacity</th>
+                <th>Available Spots</th>
                   <th></th>
 				  
               </tr>         
@@ -99,11 +97,8 @@ require_once 'functions.php';
               <tr>
 				<td></td>
                 <td><input type='hidden' id="roomNum<?php echo $tableIndex ?>" value="<?php echo $row['roomNumber'] ?>"> <?php echo "$row[roomNumber]";?> </td>
-                <td>
-					 <input type='hidden' id="deptID<?php echo $tableIndex ?>" value="<?php echo "$row[departmentID]"; ?>" >
-					 <a id="departmentIDVal<?php echo $tableIndex ?>"><?php echo "$row[departmentID] ";?></a>
-				</td>
-				
+                
+				<input type='hidden' id="deptID<?php echo $tableIndex ?>" value="<?php echo "$row[departmentID]"; ?>" >
 				<td>
 					 <input type='hidden' id="deptName<?php echo $tableIndex ?>" value="<?php echo "$row[departmentName]"; ?>" >
 					 <a id="departmentNameVal<?php echo $tableIndex ?>"><?php echo "$row[departmentName] ";?></a>
@@ -114,14 +109,19 @@ require_once 'functions.php';
 					 <a id="departmentIDVal<?php echo $tableIndex ?>"><?php echo "$row[description] ";?></a>
 				</td>
 				
-				  <td>
-				 	 <input type='hidden' id="maxCap<?php echo $tableIndex ?>" value="<?php echo "$row[maxCapacity]"; ?>" >
-					<a id="maxCapVal<?php echo $tableIndex ?>"><?php echo "$row[maxCapacity]";?></a>
+				<td>
+				    <a id="maxCapVal<?php echo $tableIndex ?>"><?php echo $row['maxCapacity'];?></a>
 				</td>
                     
                 <td>
+                    <input type='hidden' id="maxCap<?php echo $tableIndex ?>" value="<?php echo "$row[maxCapacity]"; ?>" >
 					<input type='hidden' id="currentCap<?php echo $tableIndex ?>" value="<?php echo "$row[patientsAssigned]"; ?>" >
-					<a id="currentCapVal<?php echo $tableIndex ?>"><?php echo "$row[patientsAssigned]";?></a>
+					<a id="currentCapVal<?php echo $tableIndex ?>"><?php $available = $row['maxCapacity'] - $row['patientsAssigned'];
+					                                                     if($available == 0)
+					                                                     {
+					                                                        $available = "Full";
+					                                                     }
+					                                                     echo $available;?></a>
 				</td>
 				
 				<td>

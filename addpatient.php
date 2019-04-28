@@ -36,8 +36,17 @@ if (isset($_POST['firstName'])){
          }
          }
          
-   header('Location: main.php');
-      
+   $lastID_result = mysqli_query($connection,"SELECT patientID FROM patient WHERE patientID = LAST_INSERT_ID()");
+    $lastID = mysqli_fetch_assoc($lastID_result);
+   echo "Patient Added. Would you like to assign a diagnosis?";
+   echo "<form method='post' action='adddiagnosis.php' onsubmit='return true'>
+                    <button type='submit' name='patientID' value=". $lastID['patientID'] ." class='btn btn-outline-success' >Yes, add diagnosis</button>
+                </form>";
+                
+   echo "<form method='post' action='main.php' onsubmit='return true'>
+                    <button type='submit' class='btn btn-outline-success' >No, return to main menu</button>
+                </form>";
+   //header('Location: main.php');
     } 
 
 ?>
@@ -84,7 +93,7 @@ if (isset($_POST['firstName'])){
     </nav>
 
   <header>
-    <a href="main.php">
+    <a>
       <img src="images/logo.png"  class="logo">
     </a>
   </header>
@@ -115,7 +124,7 @@ if (isset($_POST['firstName'])){
                             {
                                 while ($row = mysqli_fetch_assoc($result))
                                 {
-                                    echo '<option value="'.$row['departmentID'].'"> '.$row['departmentID']. ' - ' .$row['departmentName'].'</option>';
+                                    echo '<option value="'.$row['departmentID'].'"> '.$row['departmentID']. ' | ' .$row['departmentName'].'</option>';
                                 }
                             }
                         ?>

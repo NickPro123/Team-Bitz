@@ -282,7 +282,21 @@ $history = array();
     {
     $history[] = $row_user;
     }
-	  }                           
+	  } 
+	  
+	  $stmt = "Select d.dateAssigned, d.diagnosis ,'', 'Diagnosed' from diagnosis d
+    Where patientID = '".$var."'";
+    if($result = mysqli_query($connection,$stmt))
+	  {
+    while ($row_user = $result->fetch_row())
+    {
+    $history[] = $row_user;
+    }
+	  } 
+	  
+	  
+	  
+	  
     return $history;
 }
 ?>
