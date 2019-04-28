@@ -84,7 +84,7 @@ if (isset($_POST['dept'])){
 
 
   <header>
-    <a href="main.php">
+    <a>
       <img src="images/logo.png"  class="logo">
     </a>
   </header>

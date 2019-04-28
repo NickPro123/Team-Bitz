@@ -59,6 +59,10 @@ else
                          <?php if(isset($_SESSION['doctor'])){ ?>
                         <a class="dropdown-item" href="addprescription.php">Add Prescriptions</a>
                         <?php }?>
+                        <a class="dropdown-item" href="viewCurrentDiagnosis.php">View Current Diagnosis</a>
+                        <?php if(isset($_SESSION['doctor'])) { ?>
+                        <a class="dropdown-item" href="adddiagnosis.php">Add Diagnosis</a>
+                        <?php } ?>
                        <!-- <a class="dropdown-item" href="viewTests.php">View Tests</a> -->
                          <?php if(isset($_SESSION['doctor'])){ ?>
                         <a class="dropdown-item" href="addtest.php">Add Test</a>

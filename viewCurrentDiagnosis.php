@@ -14,15 +14,13 @@ if(isset($_POST['patientID']) || isset($_SESSION['patientID']))
 	else if(isset($_SESSION['patientID']))
 	    $id = $_SESSION['patientID'];
 	    
-	$result = queryMysql("SELECT d.drugID, d.medicineName, pap.dose, pap.timesPerDay, pap.userID, u.lastName
-	                      FROM drug as d 
-	                      JOIN prescriptionassignedtopatient as pap 
-	                      ON d.drugID = pap.drugID 
-	                      JOIN patient as pat 
-	                      ON pap.patientID = pat.patientID 
+	$result = queryMysql("SELECT u.userID, u.lastName, d.diagnosis, d.doctorNotes, d.dateAssigned
+	                      FROM patient AS p
+	                      JOIN diagnosis AS d
+	                      ON p.patientID = d.patientID
 	                      JOIN user AS u
-	                      ON pap.userID = u.userID
-	                      WHERE pat.patientID = '". $id ."'");  
+	                      ON d.userID = u.userID
+	                      WHERE d.patientID = '". $id ."'");  
 }
 else
 	{
@@ -38,7 +36,7 @@ else
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
         <link href="https://fonts.googleapis.com/css?family=Lato|Raleway:400,700,900" rel="stylesheet">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <title>Prime Health Care - View Prescriptions</title>
+        <title>Prime Health Care - View Diagnosis</title>
     </head>
     <!--Navbar-->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -57,14 +55,14 @@ else
                        aria-haspopup="true" aria-expanded="false"><?php $nameOfPatient = getPatientName($_SESSION['patientID']);
                         echo "$nameOfPatient[firstName] $nameOfPatient[lastName]";?></a>
                     <div class="dropdown-menu dropdown-primary" aria-labelledby="navbarDropdownMenuLink">
-                       <!-- <a class="dropdown-item" href="viewPrescriptions.php">View Prescriptions</a> -->
+                        <a class="dropdown-item" href="viewPrescriptions.php">View Prescriptions</a>
                          <?php if(isset($_SESSION['doctor'])){ ?>
                         <a class="dropdown-item" href="addprescription.php">Add Prescriptions</a>
                         <?php }?>
-                        <a class="dropdown-item" href="viewCurrentDiagnosis.php">View Current Diagnosis</a>
-                        <?php if(isset($_SESSION['doctor'])){ ?>
+                        <!-- <a class="dropdown-item" href="viewCurrentDiagnosis.php">View Current Diagnosis</a> -->
+                        <?php if(isset($_SESSION['doctor'])) { ?>
                         <a class="dropdown-item" href="adddiagnosis.php">Add Diagnosis</a>
-                        <?php }?>
+                        <?php } ?>
                         <a class="dropdown-item" href="viewTests.php">View Tests</a>
                          <?php if(isset($_SESSION['doctor'])){ ?>
                         <a class="dropdown-item" href="addtest.php">Add Test</a>
@@ -101,7 +99,7 @@ else
     <div class="container">
         <div class="center">
           <h1><?php $nameOfPatient = getPatientName($_SESSION['patientID']); 
-			echo "$nameOfPatient[firstName] $nameOfPatient[lastName]";?> - Prescription Menu </h1>
+			echo "$nameOfPatient[firstName] $nameOfPatient[lastName]";?> - Diagnosis Menu </h1>
                 <?php if ($result->num_rows > 0)
       {
           ?>
@@ -115,10 +113,9 @@ else
                 <input type="text" class="form-control border-left-0 mt-0 h-100" id="searchBarInput" onKeyUp="patientSearch();" placeholder="Enter your search term">
                 <div class="input-group-append">
                     <select id="searchCat" class="form-control mt-0 h-100">
-                        <option value=1>Drug ID</option>
-                        <option value=2>Drug Name</option>
-                        <option value=3>Dose</option>
-                        <option value=4>Frequency</option>
+                        <option value=1>Doctor</option>
+                        <option value=2>Diagnosis</option>
+                        <option value=4>Date</option>
                     </select>
                 </div>
             </div>
@@ -128,11 +125,10 @@ else
          <table id="patientViewTable" class="table table-striped">
               <tr>
 				  <th></th>
-                <th>ID</th>
-                <th>Drug Name</th>
-                <th>Dose</th>
-                <th>Frequency</th>
-                <th>Prescribed By</th>
+                <th>Doctor</th>
+                <th>Diagnosis</th>
+                <th>Notes</th>
+                <th>Date Assigned</th>
                   <th></th>
 				  
               </tr>
@@ -144,71 +140,70 @@ else
             
               <tr>
 				<td></td>
-                <td><input type='hidden' id="drugID<?php echo $tableIndex ?>" value="<?php echo $row['drugID'] ?>"> <?php echo "$row[drugID]";?> </td>
                 <td>
-					 <input type='hidden' id="drugName<?php echo $tableIndex ?>" value="<?php echo "$row[medicineName]"; ?>" >
-					 <a id="drugNameVal<?php echo $tableIndex ?>"><?php echo "$row[medicineName] ";?></a>
-				</td>
-				  <td>
-				 	 <input type='hidden' id="medicineDose<?php echo $tableIndex ?>" value="<?php echo "$row[dose]"; ?>" >
-					<a id="medicineDoseVal<?php echo $tableIndex ?>"><?php echo "$row[dose]";?></a><a> mg</a>
-				</td>
+                    <input type='hidden' id="userID<?php echo $tableIndex ?>" value="<?php echo $row['userID'] ?>">
+                    <a>Dr. </a>
+                    <a id="doctorVal<?php echo $tableIndex ?>" > <?php echo "$row[lastName]";?> </a>
+                </td>
                 <td>
-					<input type='hidden' id="freq<?php echo $tableIndex ?>" value="<?php echo "$row[timesPerDay]"; ?>" >
-					<a id="freqVal<?php echo $tableIndex ?>"><?php echo "$row[timesPerDay]";?></a><a> times per day</a>
+					 <input type='hidden' id="diagnosis<?php echo $tableIndex ?>" value="<?php echo "$row[diagnosis]"; ?>" >
+					 <a id="diagnosisVal<?php echo $tableIndex ?>"><?php echo "$row[diagnosis] ";?></a>
 				</td>
 				<td>
-				    <input type="hidden" id="userID<?php echo $tableIndex ?>" value="<?php echo "$row[userID]"; ?>" >
-				    <a>Dr. </a><a id="userNameVal<?php echo $tableIndex ?>"><?php echo "$row[lastName]"; ?></a>
+				    <input type='hidden' id="notes<?php echo $tableIndex ?>" value="<?php echo "$row[doctorNotes]"; ?>" >
+					 <a id="notesVal<?php echo $tableIndex ?>"><?php echo "$row[doctorNotes] ";?></a>
+				</td>
+				  <td>
+				 	 <input type='hidden' id="dateAssigned<?php echo $tableIndex ?>" value="<?php echo "$row[dateAssigned]"; ?>" >
+					<a id="dateAssignedVal<?php echo $tableIndex ?>"><?php echo "$row[dateAssigned]";?></a>
 				</td>
                   <td class="btnCol">
                       
                       <button id= "detailBtn" onclick="openPopupMenu(<?php echo $tableIndex ?>)" class="btn btn-outline-success">Details</button>
                 </td>
               </tr>
-            <?php ; $tableIndex++; } }else echo "<div class='container style=float: left;'>There are currently no perscriptions assigned to this patient. Assign a perscription below </div>"?>
+            <?php ; $tableIndex++; } }else echo "<div class='container style=float: left;'>There are currently no diagnoses assigned to this patient. Assign a diagnoses below </div>"?>
 </table>
           
      <?php if(isset($_SESSION['doctor'])){ ?>
-          <form method='post' action='addprescription.php' onsubmit='return true'>                       
-                    <button type="submit" name="patientID" value="<?php echo $id; ?>"class="btn btn-outline-success ">Add Prescription</button>     
+          <form method='post' action='adddiagnosis.php' onsubmit='return true'>                       
+                    <button type="submit" name="patientID" value="<?php echo $id; ?>"class="btn btn-outline-success ">Add Diagnosis</button>     
                 </form>                
              <?php }?>
         </div>
     </div>
-            <!--Prescription Details Popup-->
+            <!--Diagnosis Details Popup-->
             <div id="popup_bg">
                 <div class="popup_main_div">
-                    <div class="popup_header">Prescription Detail
+                    <div class="popup_header">Diagnosis Detail
                     </div>
                     <div class="popup_main">
                         <form>
                             <div class="form-row">
                                 <div class="col">
-                                    ID: <br>
-                                    <input type="text" id="detailDrugID" name="detailDrugID" readonly="readonly">
+                                    Assigned By: <br>
+                                    <input type="text" id="detailDoctor" name="detailDoctor" readonly="readonly">
                                 </div>
                                 <div class="col">
-                                    Medicine Name: <br>
-                                    <input type="text" id="detailDrugName" name="detailDrugName" readonly="readonly"><br>
+                                    Diagnosis: <br>
+                                    <input type="text" id="detailDiagnosis" name="detailDiagnosis" readonly="readonly"><br>
                                 </div>
                                 <div class="col">
-                                    Dose: (mg)<br>
-                                    <input type="text" id="detailDose" name="detailDose" readonly="readonly"><br>
+                                    Date Assigned: <br>
+                                    <input type="text" id="detailDate" name="detailDate" readonly="readonly"><br>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="col">
-                                    Frequency: (times per day)<br>
-                                    <input type="text" id="detailFreq" name="detailFreq" readonly="readonly"><br>
+                                    Doctor Notes: <br>
+                                    <input type="text" id="detailNotes" name="detailNotes" readonly="readonly"><br>
                                 </div>
                             </div>
                         </form>
                      <?php   if(isset($_SESSION['doctor'])){ ?>
 
                         <img id= "editBtn" src="images/edit_mode.png" style="cursor: pointer; max-width: 50px; max-height: 50px; margin-left:10px; margin-top: 10px;" onClick="enableEditMode();" >
-                        <button id = "saveBtn">Save Changes</button>
-                        <a id="successMessage"></a>
+                        <button id = "saveBtn" onClick="saveDetails();">Save Changes</button>
                         <?php }?> 
                     </div>
                     <div id="close_popup_div">
@@ -222,19 +217,17 @@ else
         <!-- Scripting to display and hide patient detail popup menu -->
     <script type="text/javascript">
         var popup = document.getElementById("popup_bg");
-        var IDMenuItem = document.getElementById("detailDrugID");
-		var nameMenuItem = document.getElementById("detailDrugName");
-		var doseMenuItem = document.getElementById("detailDose");
-		var freqMenuItem = document.getElementById("detailFreq");
+        var doctorMenuItem = document.getElementById("detailDoctor");
+		var diagMenuItem = document.getElementById("detailDiagnosis");
+		var notesMenuItem = document.getElementById("detailNotes");
+		var dateMenuItem = document.getElementById("detailDate");
 		var isEditing = false;
-		var drugID;
-		var medicineName;
-		var dose;
-		var freq;
+		var doctor;
+		var diagnosis;
+		var notes;
+		var date;
 		var recordIndex;
 		var saveBtn = document.getElementById("saveBtn");
-        var saveHistoryBtn = document.getElementById("saveHistoryBtn");
-		var successMsg = document.getElementById("successMessage");
 		
 		var patientID = <?php echo $_SESSION['patientID'] ?>
 		
@@ -292,20 +285,20 @@ else
         }
         function displayPatientDetails(index)
 		{
-			var IDIndex = "drugID" + index +"";
-			var nameIndex = "drugName" + index + "";
-			var doseIndex = "medicineDose" + index + "";
-			var freqIndex = "freq" + index + "";
+			var doctorIndex = "doctorVal" + index +"";
+			var diagIndex = "diagnosis" + index + "";
+			var notesIndex = "notes" + index + "";
+			var dateIndex = "dateAssigned" + index + "";
 			
-			drugID = document.getElementById(IDIndex);
-			drugName = document.getElementById(nameIndex);
-			dose = document.getElementById(doseIndex);
-			freq = document.getElementById(freqIndex);
+			doctor = document.getElementById(doctorIndex);
+			diagnosis = document.getElementById(diagIndex);
+			notes = document.getElementById(notesIndex);
+			date = document.getElementById(dateIndex);
 						
-			IDMenuItem.value = drugID.value;
-			nameMenuItem.value = drugName.value;
-			doseMenuItem.value = dose.value;
-			freqMenuItem.value = freq.value;
+			doctorMenuItem.value = doctor.text;
+			diagMenuItem.value = diagnosis.value;
+			notesMenuItem.value = notes.value;
+			dateMenuItem.value = date.value;
 			
 		}
         function closePopupMenu()
@@ -320,7 +313,6 @@ else
 			var scrollPosition = html.data('scroll-position');
 			html.css('overflow', html.data('previous-overflow'));
 			window.scrollTo(scrollPosition[0], scrollPosition[1])
-            successMsg.innerHTML = "";
         }
          <?php   if(isset($_SESSION['doctor'])){ ?>
         function enableEditMode()
@@ -329,10 +321,8 @@ else
             {
                 editBtn.src = "images/enable_edit_mode.png";
                 saveBtn.style.visibility = 'visible';
-                nameMenuItem.readOnly = false;
-                doseMenuItem.readOnly = false;
-                freqMenuItem.readOnly = false;
-                successMsg.innerHTML = "";
+                diagMenuItem.readOnly = false;
+                notesMenuItem.readOnly = false;
                 isEditing = true;
             }
             else
@@ -346,59 +336,35 @@ else
             {
                 editBtn.src = "images/edit_mode.png";
                 saveBtn.style.visibility = 'hidden';
-                nameMenuItem.readOnly = true;
-                doseMenuItem.readOnly = true;
-                freqMenuItem.readOnly = true;
+                diagMenuItem.readOnly = true;
+                notesMenuItem.readOnly = true;
                 isEditing = false;
             }
         }
-        
+        <?php }?>
 		$(document).ready(function(){
 			$("#saveBtn").click(function(){
-				var pk = drugID.value;
-				var newDose = doseMenuItem.value;
-				var newFreq = freqMenuItem.value;
-				var updatedRecordDose = document.getElementById("medicineDoseVal" + recordIndex);
-				var updatedRecordFreq = document.getElementById("freqVal" + recordIndex);
+				var uID = document.getElementById("userID" + recordIndex).value;
+				var newDiagnosis = diagMenuItem.value;
+				var newNotes = notesMenuItem.value;
+				var updatedRecordDiag = document.getElementById("diagnosisVal" + recordIndex);
+				var updatedRecordNotes = document.getElementById("notesVal" + recordIndex);
 			
-			    if($.isNumeric(newDose) && $.isNumeric(newFreq))
-			    {
-			        if( ( Math.sign(newDose) > 0 ) && ( Math.sign(newFreq) > 0 ) )
-			        {
-				        if(Math.floor(newFreq) == newFreq)
-				        {
-				            $.ajax({
-    					        url: "saveChangesPrescriptions.php",
-	    				        method: "post",
-		    			        data: { patient: patientID, drugKey: pk, dose: newDose, freq: newFreq},
-			    		        success: function(response){
-				    	    	    console.log(response);
-					        	    $(updatedRecordDose).text(newDose);
-					        	    $(updatedRecordFreq).text(newFreq);
-						   
-    					     	    $(dose).val(newDose);
-	    				        	$(freq).val(newFreq);
-		    			    	    saveDetails();
-			    		        }
-				            });
-				        }
-				        else
-				        {
-				            alert("Frequency input must be an integer");
-				        }
-			        }
-			        else
-			        {
-			            alert("Dose and Frequency inputs must be positive values")
-			        }
-			    }
-			    else
-			    {
-			        alert("Dose and Frequency inputs must be numeric");
-			    }
+				$.ajax({
+					url: "saveChangesDiagnosis.php",
+					method: "post",
+					data: { patient: patientID, userID: uID, diagnosis: newDiagnosis, notes: newNotes},
+					success: function(response){
+						console.log(response);
+						$(updatedRecordDiag).text(newDiagnosis);
+						$(updatedRecordNotes).text(newNotes);
+						
+						$(diagnosis).val(newDiagnosis);
+						$(notes).val(newNotes);
+					}
+				});
 			});
 		});
-		<?php }?>
 		
 		//If in editing mode, and the close button is clicked confirm that the user doesnt want to save changes
 		$(document).ready(function(){

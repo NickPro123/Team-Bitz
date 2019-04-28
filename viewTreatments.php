@@ -59,6 +59,10 @@ else
                          <?php if(isset($_SESSION['doctor'])){ ?>
                         <a class="dropdown-item" href="addprescription.php">Add Prescriptions</a>
                         <?php }?>
+                        <a class="dropdown-item" href="viewCurrentDiagnosis.php">View Current Diagnosis</a>
+                        <?php if(isset($_SESSION['doctor'])) { ?>
+                        <a class="dropdown-item" href="adddiagnosis.php">Add Diagnosis</a>
+                        <?php } ?>
                         <a class="dropdown-item" href="viewTests.php">View Tests</a>
                          <?php if(isset($_SESSION['doctor'])){ ?>
                         <a class="dropdown-item" href="addtest.php">Add Test</a>
@@ -185,33 +189,25 @@ else
                     <div class="popup_main">
                         <form>
                             <div class="form-row">
-                                <div class="col">
-                                    <div class="form-group">
+                                    <div class="form-group col">
                                         <label for="detailTreatmentID">ID:</label>
-                                        <input type="text" id="detailTreatmentID" class="form-control" name="detailTreatmentID" readonly="readonly">
-                                    </div>
+                                        <input type="text" id="detailTreatmentID" class="form-control" name="detailTreatmentID" readonly>
                                 </div>
 
-                                <div class="col">
-                                    <div class="form-group">
+                                    <div class="form-group col">
                                         <label for="detailTreatmentName">Treatment Name: </label>
-                                        <input type="text" id="detailTreatmentName" class="form-control" name="detailTreatmentName" readonly="readonly">
-                                    </div>
+                                        <input type="text" id="detailTreatmentName" class="form-control" name="detailTreatmentName" readonly>
                                 </div>
 
-								<div class="col">
-                                    <div class="form-group">
+                                    <div class="form-group col">
                                         <label for="detailStart">Start Date:</label>
-									    <input type="date" id="detailStart" class="form-control" name="detailStart" readonly="readonly">
+									    <input type="date" id="detailStart" class="form-control" name="detailStart" readonly>
                                     </div>
-								</div>
                             </div>
                             <div class="form-row">
-                                <div class="col">
-                                    <div class="form-group">
+                                    <div class="form-group col">
                                         <label for="detailInstructions">Instructions:</label>
-                                        <input type="text" id="detailInstructions" class="form-control" name="detailInstructions" readonly="readonly">
-                                    </div>
+                                        <input type="text" id="detailInstructions" class="form-control" name="detailInstructions" readonly>
                                 </div>
                             </div>
                         </form>
