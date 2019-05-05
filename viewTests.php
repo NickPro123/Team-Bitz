@@ -171,7 +171,7 @@ else
                       <button id= "detailBtn" onclick="openPopupMenu(<?php echo $tableIndex ?>)" class="btn btn-outline-success">Details</button>
                 </td>
               </tr>
-            <?php ; $tableIndex++; } }else echo "<div class='container style=float: left;'>There are currently no tests assigned to this patient. Assign a test below </div>"?>
+            <?php ; $tableIndex++; } }else { echo "<div class='container style=float: left;'>There are currently no tests assigned to this patient."; if(isset($_SESSION['doctor'])){ echo " Assign a test below."; } echo "</div>"; } ?>
 </table>
           
      <?php if(isset($_SESSION['doctor'])){ ?>
@@ -223,7 +223,7 @@ else
                         </form>
                          <?php   if(isset($_SESSION['doctor'])){ ?>
                         <img id= "editBtn" src="images/edit_mode.png" style="cursor: pointer; max-width: 50px; max-height: 50px; margin-left:10px; margin-top: 10px;" onClick="enableEditMode();" >
-                        <button id = "saveBtn" onClick="saveDetails();">Save Changes</button>
+                        <button id = "saveBtn" >Save Changes</button>
                         <?php } ?>
 </div>
                     <div id="close_popup_div">
@@ -371,21 +371,35 @@ else
 				var newResult = resultMenuItem.value;
 				var updatedRecordStart = document.getElementById("startDateVal" + recordIndex);
 				var updatedRecordResult = document.getElementById("resultVal" + recordIndex);
-			
-				$.ajax({
-					url: "saveChangesTests.php",
-					method: "post",
-					data: { patient: patientID, primaryKey: testpk, start: newStart, result: newResult},
-					success: function(response){
-						console.log(response);
-						$(updatedRecordStart).text(newStart);
-						$(updatedRecordResult).text(newResult);
+			    
+			    var currentDate = new Date().toJSON().slice(0,10).replace(/-/g,'-');
+			    if (newStart == "")
+			    {
+				    alert("You didn't enter a date. Please enter one.");
+		    	}
+		    	else if (newStart < currentDate)
+			    {
+			    	alert("You entered a date earlier than " + currentDate + ". Please try again.");
+			    }
+			    else
+			    {
+				    $.ajax({
+					    url: "saveChangesTests.php",
+					    method: "post",
+					    data: { patient: patientID, primaryKey: testpk, start: newStart, result: newResult},
+					    success: function(response){
+						    console.log(response);
+						    $(updatedRecordStart).text(newStart);
+						    $(updatedRecordResult).text(newResult);
 						
-						$(start).val(newStart);
+				    		$(start).val(newStart);
 						
-						$(result).val(newResult);
-					}
-				});
+					    	$(result).val(newResult);
+					    	
+					    	saveDetails();
+					    }
+				    });
+			    }
 			});
 		});
 		

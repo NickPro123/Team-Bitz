@@ -1,21 +1,4 @@
-html{
-    height: 100%;
-}
 
-@media (max-width: 740px) {
-    html,
-    body,
-    header,
-    .view {
-        height: 100vh;
-    }
-}
-
-@media (max-width: 991px) {
-    .navbar:not(.top-nav-collapse) {
-       background: #ffffff !important;
-    }
-}
 
 html{
     font-family: 'Lato', sans-serif;
@@ -246,5 +229,9 @@ table {
     width: 50%;  
     margin-left: auto; 
     margin-right: auto;
+}
+
+#detailStart{
+    padding-top: 3px;
 }
 

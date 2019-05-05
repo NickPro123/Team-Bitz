@@ -5,13 +5,18 @@ if(!isset($_SESSION['user'])){
     header("Location:login.php");
 }
 
-if(!isset($_POST['deptID']))
+if(!isset($_POST['deptID']) && !isset($_SESSION['deptID']))
 {
     $deptID = getUserDept($_SESSION['user']);
 }
-else
+else if(isset($_POST['deptID']))
 {
     $deptID = $_POST['deptID'];
+    $_SESSION['deptID'] = $deptID;
+}
+else if(isset($_SESSION['deptID']))
+{
+    $deptID = $_SESSION['deptID'];
 }
 
 //in the event that the user doesnt have a type, use the default(deptID = 1 or general care dept)
@@ -27,10 +32,15 @@ if(isset($_POST['showInactive']))
 	{
 	    $showInactive = 1;
 	    $deptID = -1;
-		$result = queryMysql("SELECT p.patientID, p.firstName, p.lastName,  p.roomNumber, diag.diagnosis
+		$result = queryMysql("SELECT DISTINCT p.patientID, p.firstName, p.lastName, (SELECT MAX(dischargeDate) FROM patienthistory WHERE patientID = p.patientID) AS dischargeDate ,  p.roomNumber, diag.diagnosis
 		                      FROM patient AS p
 		                      LEFT JOIN diagnosis AS diag
 		                      ON p.patientID = diag.patientID
+		                      AND diag.dateAssigned IN (SELECT MAX(dateAssigned)
+                                                            FROM diagnosis
+                                                            GROUP BY patientID)
+                              JOIN patienthistory AS history
+                              ON p.patientID = history.patientID
 		                      WHERE p.roomNumber IS NULL");
 	}
 	
@@ -47,6 +57,9 @@ if(isset($_POST['showInactive']))
 	                             ON r.departmentID = d.departmentID
 	                             LEFT JOIN diagnosis AS diag
 	                              ON p.patientID = diag.patientID
+	                              AND diag.dateAssigned IN (SELECT MAX(dateAssigned)
+                                                            FROM diagnosis
+                                                            GROUP BY patientID)
     	                          WHERE p.roomNumber IS NOT NULL AND d.departmentID = ". $deptID);
 	    }
 	    else
@@ -60,6 +73,9 @@ if(isset($_POST['showInactive']))
 	                             ON r.departmentID = d.departmentID
 	                             LEFT JOIN diagnosis AS diag
 	                              ON p.patientID = diag.patientID
+	                              AND diag.dateAssigned IN (SELECT MAX(dateAssigned)
+                                                            FROM diagnosis
+                                                            GROUP BY patientID)
     	                          WHERE p.roomNumber IS NOT NULL");
 	    }
 	}
@@ -80,6 +96,9 @@ else
 	                             ON r.departmentID = d.departmentID
 	                             LEFT JOIN diagnosis AS diag
 	                              ON p.patientID = diag.patientID
+	                              AND diag.dateAssigned IN (SELECT MAX(dateAssigned)
+                                                            FROM diagnosis
+                                                            GROUP BY patientID)
     	                          WHERE p.roomNumber IS NOT NULL AND d.departmentID = ". $deptID);
 	    }
 	    else
@@ -93,6 +112,9 @@ else
 	                             ON r.departmentID = d.departmentID
 	                             LEFT JOIN diagnosis AS diag
 	                              ON p.patientID = diag.patientID
+	                              AND diag.dateAssigned IN (SELECT MAX(dateAssigned)
+                                                            FROM diagnosis
+                                                            GROUP BY patientID)
     	                          WHERE p.roomNumber IS NOT NULL");
 	    }
     }
@@ -107,6 +129,9 @@ else
 	                      ON r.departmentID = d.departmentID
 	                      LEFT JOIN diagnosis AS diag
 	                      ON p.patientID = diag.patientID
+	                      AND diag.dateAssigned IN (SELECT MAX(dateAssigned)
+                                                            FROM diagnosis
+                                                            GROUP BY patientID)
 	                      WHERE p.roomNumber IS NOT NULL AND p.patientID = ". $_POST['patientID']);
     }
 	
@@ -192,8 +217,8 @@ else
 <body>
     <div class="container">
         <div class="center">
-          <!-- <h1>Main Menu</h1> -->
-          <h1>┴┬┴┤( ͡° ͜ʖ├┬┴┬</h1>
+          <h1>Main Menu</h1>
+          <!-- <h1>┴┬┴┤( ͡° ͜ʖ├┬┴┬</h1>-->
           <!--Toggle active/discharged patients-->
           <div class="toggleInactivePatientDiv" style= "width: 50%;  margin-left: auto; margin-right: auto;">
 			  <form method="post" onsubmit="return true" action="main.php">
@@ -260,6 +285,10 @@ else
                 if($showInactive == 0)
                 { ?>
                 <th>Room Number</th>
+                <?php }
+                else
+                { ?>
+                <th>Discharge Date</th>
                 <?php } ?>
                 <?php 
                 if($deptID == -1)
@@ -303,6 +332,13 @@ else
                 { ?>
                 <td>
 					<a id="roomTableVal<?php echo $tableIndex ?>"><?php echo "$row[roomNumber]";?></a>
+				</td>
+				<?php }
+				else
+				{ ?>
+				<td>
+				    <input type='hidden' id="dischargeDate<?php echo $tableIndex ?>" value="<?php echo "$row[dischargeDate]"; ?>">
+				    <a id="dischargeDateVal<?php echo $tableIndex ?>"></a><?php echo "$row[dischargeDate]"; ?></a>
 				</td>
 				<?php } ?>
 				<input type="hidden" id="patientDeptID<?php echo $tableIndex ?>" value="<?php echo "$row[departmentID]"; ?>">
@@ -427,7 +463,7 @@ else
                         </div>
                             <div class="row">
                                 <div class="col-lg float-left">
-                                    <button id = "saveBtn" class="btn btn-success" onClick="saveDetails();">Save Changes</button>
+                                    <button id = "saveBtn" class="btn btn-success">Save Changes</button>
                                 </div>
                                 <div class="col-lg float-right">
                                     <img id= "editBtn" src="images/edit_mode.png" style="cursor: pointer; max-width: 50px; max-height: 50px; margin-left:10px; margin-top: 10px;" onClick="enableEditMode();" >
@@ -592,6 +628,44 @@ else
                 isEditing = false;
             }
         }
+        
+        function validate(fNameInput,lNameInput,roomInput)
+        {
+        
+            if(fNameInput == "")
+            {
+                alert("First Name cannot be blank.");
+                return false;
+            }
+        
+            if(lNameInput == "")
+            {
+                alert("Last Name cannot be blank.");
+                return false;
+            }
+        
+            var regex = new RegExp(/^[A-Za-z0-9 ]+$/);
+        
+            if(regex.test(fNameInput) == false)
+            {
+                alert("First Name cannot contain special characters.");
+                return false;
+            }
+        
+             else if(regex.test(lNameInput) == false)
+             {
+                alert("Last Name cannot contain special characters.");
+                return false;
+             }
+        
+         if(roomInput == 0)
+         {
+                alert("Please select a room for the patient.");
+                return false;
+         }
+        
+        return true;
+    }
         <?php }?>
         // JQuery to handle updating patient record
 		$(document).ready(function(){
@@ -605,38 +679,44 @@ else
 				var updatedRecordLName = document.getElementById("lNameTableVal" + recordIndex);
 				var updatedRecordDept = document.getElementById("deptTableVal" + recordIndex);
 				var updatedRecordRoom = document.getElementById("roomTableVal" + recordIndex);
-			    //ajax call to run update function
-				$.ajax({
-					url: "saveChanges.php",
-					method: "post",
-					data: { primaryKey: pk, fname: newFName, lname: newLName, room: newRoom},
-					success: function(response){
-						console.log(response);
-						//if patient was not assigned in a room, admit the patient
-						if($(patientRm).val() == '')
-						{
-						    $.ajax({
-						        url: "admitPatient.php",
-						        method: "post",
-						        data: {patientID: pk},
-						        success: function(response){
-						            console.log(response);
-						            window.location.href='main.php';
-						        }
-						    })
-						}
-						//After update, update ui elements
-						$(updatedRecordFName).text(newFName);
-						$(updatedRecordLName).text(newLName);
-						$(updatedRecordDept).text(deptName);
-						$(updatedRecordRoom).text(newRoom);
+				
+				if(validate(newFName,newLName,newRoom) == true)
+				{
+				    //ajax call to run update function
+			    	$.ajax({
+				    	url: "saveChanges.php",
+				    	method: "post",
+				    	data: { primaryKey: pk, fname: newFName, lname: newLName, room: newRoom},
+			    		success: function(response){
+			    			console.log(response);
+			    			//if patient was not assigned in a room, admit the patient
+			    			if($(patientRm).val() == '')
+				    		{
+				    		    $.ajax({
+				    		        url: "admitPatient.php",
+				    		        method: "post",
+				    		        data: {patientID: pk},
+				    		        success: function(response){
+				    		            console.log(response);
+				    		            window.location.href='main.php';
+					    	        }
+						         });
+						    }
+						    //After update, update ui elements
+					    	$(updatedRecordFName).text(newFName);
+					    	$(updatedRecordLName).text(newLName);
+				    		$(updatedRecordDept).text(deptName);
+			    			$(updatedRecordRoom).text(newRoom);
 						
-						$(patientFName).val(newFName);
-						$(patientLName).val(newLName);
-						$(patientDept).val(newDept);
-						$(patientRm).val(newRoom);
-					}
-				});
+		    				$(patientFName).val(newFName);
+		    				$(patientLName).val(newLName);
+			    			$(patientDept).val(newDept);
+		    				$(patientRm).val(newRoom);
+		    				
+		    			    saveDetails();
+				    	}
+				    });
+				}
 			});
 		});
 		

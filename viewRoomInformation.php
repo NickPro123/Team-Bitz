@@ -1,6 +1,9 @@
 <?php
 session_start();
 require_once 'functions.php';
+if(!isset($_SESSION['user'])){
+    header("Location:login.php");
+}
 	$result = queryMysql("select * from room as r join department as d on d.departmentID = r.departmentID");  
 ?>
 <!DOCTYPE html>
@@ -16,7 +19,7 @@ require_once 'functions.php';
     </head>
     <!--Navbar-->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="index.html">Prime Care</a>
+        <a class="navbar-brand" href="main.php">Prime Care</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -128,7 +131,7 @@ require_once 'functions.php';
 				    <button id= "viewBtn" name="viewBtn" onclick="openPopupMenu(<?php echo $tableIndex ?>)" class="btn btn-outline-success">View</button>
 				</td>
               </tr>
- <?php ; $tableIndex++; } }else echo "<div class='container style=float: left;'>There are currently no perscriptions assigned to this patient. Assign a perscription below </div>"?>
+ <?php ; $tableIndex++; } }else echo "<div class='container center'>There are currently no perscriptions assigned to this patient. Assign a perscription below </div>"?>
 </table>
         </div>
 		</div>
@@ -154,7 +157,7 @@ require_once 'functions.php';
                             </table>
                         </form>
                         
-                        <div id="emptyMessage"></div>
+                        <div id="emptyMessage" class="container center h1 pb-3"></div>
                     </div>
                     <div id="close_popup_div" onclick="closePopupMenu()">
                         <p title="Close Detail Menu" >

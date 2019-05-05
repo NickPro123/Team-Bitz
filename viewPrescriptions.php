@@ -166,7 +166,7 @@ else
                       <button id= "detailBtn" onclick="openPopupMenu(<?php echo $tableIndex ?>)" class="btn btn-outline-success">Details</button>
                 </td>
               </tr>
-            <?php ; $tableIndex++; } }else echo "<div class='container style=float: left;'>There are currently no perscriptions assigned to this patient. Assign a perscription below </div>"?>
+            <?php ; $tableIndex++; } }else { echo "<div class='container style=float: left;'>There are currently no perscriptions assigned to this patient."; if(isset($_SESSION['doctor'])){ echo " Assign a perscription below."; } echo "</div>"; } ?>
 </table>
           
      <?php if(isset($_SESSION['doctor'])){ ?>
@@ -186,21 +186,21 @@ else
                             <div class="form-row">
                                 <div class="col">
                                     ID: <br>
-                                    <input type="text" id="detailDrugID" name="detailDrugID" readonly="readonly">
+                                    <input type="text" id="detailDrugID" class="form-control" name="detailDrugID" readonly="readonly">
                                 </div>
                                 <div class="col">
                                     Medicine Name: <br>
-                                    <input type="text" id="detailDrugName" name="detailDrugName" readonly="readonly"><br>
+                                    <input type="text" id="detailDrugName" class="form-control" name="detailDrugName" readonly="readonly"><br>
                                 </div>
                                 <div class="col">
                                     Dose: (mg)<br>
-                                    <input type="text" id="detailDose" name="detailDose" readonly="readonly"><br>
+                                    <input type="text" id="detailDose" class="form-control" name="detailDose" readonly="readonly"><br>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="col">
                                     Frequency: (times per day)<br>
-                                    <input type="text" id="detailFreq" name="detailFreq" readonly="readonly"><br>
+                                    <input type="text" id="detailFreq" class="form-control" name="detailFreq" readonly="readonly"><br>
                                 </div>
                             </div>
                         </form>
@@ -329,7 +329,6 @@ else
             {
                 editBtn.src = "images/enable_edit_mode.png";
                 saveBtn.style.visibility = 'visible';
-                nameMenuItem.readOnly = false;
                 doseMenuItem.readOnly = false;
                 freqMenuItem.readOnly = false;
                 successMsg.innerHTML = "";
@@ -346,7 +345,6 @@ else
             {
                 editBtn.src = "images/edit_mode.png";
                 saveBtn.style.visibility = 'hidden';
-                nameMenuItem.readOnly = true;
                 doseMenuItem.readOnly = true;
                 freqMenuItem.readOnly = true;
                 isEditing = false;

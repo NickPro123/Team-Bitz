@@ -134,7 +134,7 @@ if (isset($_POST['testID'])){
                   <input type="date" id="start" name="start" class="form-control" required="required" value="<?php $start ?>">
               </div>
               
-              <button type="submit" class="btn btn-outline-success ">Add Test</button>
+              <button type="submit" class="btn btn-outline-success " onclick="return checkDate();">Add Test</button>
       </form>
   </div>
       <!--}else{
@@ -144,6 +144,22 @@ if (isset($_POST['testID'])){
         <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+        <script>
+		function checkDate()
+		{
+			var currentDate = new Date().toJSON().slice(0,10).replace(/-/g,'-');
+			if (start.value == "")
+			{
+				alert("You didn't enter a date. Please enter one.");
+				return false;
+			}
+			else if (start.value < currentDate)
+			{
+				alert("You entered a date earlier than " + currentDate + ". Please try again.");
+				return false;
+			}
+		}
+		</script>
     </div>
     <footer class="footer">
         <div class="container-fluid"><i class="fas fa-user"></i> Logged in as: <?php echo "$_SESSION[user]";?>

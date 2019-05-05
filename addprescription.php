@@ -114,7 +114,7 @@ if (isset($_POST['drugID'])){
     </a>
   </header>
   <div class="container">
-      <form method="post" action="addprescription.php" class="addprescription"> <?php $error?>
+      <form method="post" action="addprescription.php" id="addform" class="addprescription"> <?php $error?>
           <div class="formHeader">Add a new Prescription</div>
           <!--Add Perscription Form-->
           <div class="form">
@@ -162,7 +162,7 @@ if (isset($_POST['drugID'])){
                   <input type="date" id="end" name="end" class="form-control" value="<?php $end ?>">
               </div>
 
-              <button type="submit" class="btn btn-outline-success ">Add Prescription</button>
+              <button type="submit" id="addBtn" class="btn btn-outline-success " >Add Prescription</button>
       </form>
   </div>
       <!--}else{
@@ -173,6 +173,72 @@ if (isset($_POST['drugID'])){
         <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+        		<script>
+		function validate()
+		{
+		    var doseInput;
+		    doseInput = dose.value;
+		    if(isNaN(doseInput))
+		    {
+		        alert("Dose must be a number.");
+		        return false;
+		    }
+		    else if(doseInput <= 0)
+		    {
+		        alert("Dose must be greater than zero.");
+		        return false;
+		    }
+		    
+		    var freqInput;
+		    freqInput = freq.value;
+		    if(isNaN(freqInput))
+		    {
+		        alert("Frequency must be a number.");
+		        return false;
+		    }
+		    else if(freqInput <= 0)
+		    {
+		        alert("Frequency must be greater than zero.");
+		        return false;
+		    }
+		    
+			var currentDate = new Date().toJSON().slice(0,10).replace(/-/g,'-');
+			if (end.value == "")
+			{
+				alert("You didn't enter a date. Please enter one.");
+				return false;
+			}
+			else if (end.value < currentDate)
+			{
+				alert("You entered a date earlier than " + currentDate + ". Please try again.");
+				return false;
+			}
+			
+			return true;
+		}
+		
+		$(document).ready(function(){
+		    var submitReady = 0;
+		    $("#addform").submit(function(e){
+		        if(submitReady)
+		        {
+		            return;
+		        }
+		        else
+		        {
+		            e.preventDefault();
+		        }
+		    });
+		    
+		    $("#addBtn").click(function(){
+		       if(validate())
+		       {
+		           submitReady = 1;
+		           $("#addform").submit();
+		       }
+		    });
+		});
+		</script>
     </div>
     <footer class="footer">
         <div class="container-fluid"><i class="fas fa-user"></i> Logged in as: <?php echo "$_SESSION[user]";?>

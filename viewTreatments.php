@@ -171,7 +171,7 @@ else
                       <button id= "detailBtn" onclick="openPopupMenu(<?php echo $tableIndex ?>)" class="btn btn-outline-success">Details</button>
                 </td>
               </tr>
-            <?php ; $tableIndex++; } }else echo "<div class='container style=float: left;'>There are currently no treatments assigned to this patient. Assign a treatment below </div>"?>
+            <?php ; $tableIndex++; } }else { echo "<div class='container style=float: left;'>There are currently no treatments assigned to this patient."; if(isset($_SESSION['doctor'])){ echo "Assign a treatment below."; } echo "</div>"; } ?>
 </table>
           
      <?php if(isset($_SESSION['doctor'])){ ?>
@@ -192,28 +192,27 @@ else
                                     <div class="form-group col">
                                         <label for="detailTreatmentID">ID:</label>
                                         <input type="text" id="detailTreatmentID" class="form-control" name="detailTreatmentID" readonly>
-                                </div>
-
-                                    <div class="form-group col">
+                                    </div>
+                                  <div class="form-group col">
                                         <label for="detailTreatmentName">Treatment Name: </label>
                                         <input type="text" id="detailTreatmentName" class="form-control" name="detailTreatmentName" readonly>
-                                </div>
-
-                                    <div class="form-group col">
+                                    </div>
+                                <div class="form-group col">
                                         <label for="detailStart">Start Date:</label>
 									    <input type="date" id="detailStart" class="form-control" name="detailStart" readonly>
                                     </div>
                             </div>
                             <div class="form-row">
-                                    <div class="form-group col">
-                                        <label for="detailInstructions">Instructions:</label>
+                                <div class="form-group col">
+
+                                <label for="detailInstructions">Instructions:</label>
                                         <input type="text" id="detailInstructions" class="form-control" name="detailInstructions" readonly>
                                 </div>
                             </div>
                         </form>
                          <?php   if(isset($_SESSION['doctor'])){ ?>
                         <img id= "editBtn" src="images/edit_mode.png" style="cursor: pointer; max-width: 50px; max-height: 50px; margin-left:10px; margin-top: 10px;" onClick="enableEditMode();" >
-                        <button id = "saveBtn" onClick="saveDetails();">Save Changes</button>
+                        <button id = "saveBtn" >Save Changes</button>
                         <a id="successMessage"></a>
                         <?php }?>
                     </div>
@@ -363,19 +362,33 @@ else
 				var updatedRecordStart = document.getElementById("startDateVal" + recordIndex);
 				var updatedRecordInstruction = document.getElementById("instructionVal" + recordIndex);
 			
-				$.ajax({
-					url: "saveChangesTreatments.php",
-					method: "post",
-					data: { patient: patientID, treatmentKey: pk, start: newStart, instruction: newInstruction},
-					success: function(response){
-						console.log(response);
-						$(updatedRecordStart).text(newStart);
-						$(updatedRecordInstruction).text(newInstruction);
+			    var currentDate = new Date().toJSON().slice(0,10).replace(/-/g,'-');
+			    if(newStart == "")
+			    {
+				    alert("You didn't enter a date. Please enter one.");
+		    	}
+		    	else if (newStart < currentDate)
+			    {
+			    	alert("You entered a date earlier than " + currentDate + ". Please try again.");
+			    }
+			    else
+			    {
+				    $.ajax({
+					    url: "saveChangesTreatments.php",
+				    	method: "post",
+				    	data: { patient: patientID, treatmentKey: pk, start: newStart, instruction: newInstruction},
+				    	success: function(response){
+				    		console.log(response);
+				    		$(updatedRecordStart).text(newStart);
+				    		$(updatedRecordInstruction).text(newInstruction);
 						
-						$(start).val(newStart);
-						$(Instruction).val(newInstruction);
-					}
-				});
+				    		$(start).val(newStart);
+				    		$(instruction).val(newInstruction);
+				    		
+				    		saveDetails();
+				    	}
+			    	});
+			    }
 			});
 		});
 		
