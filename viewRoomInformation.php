@@ -141,7 +141,7 @@ if(!isset($_SESSION['user'])){
                 <div class="popup_main_div">
                     <div class="popup_header">Patients in Room #<a id="detailRoomNum"></a>
                     </div>
-                    <div class="popup_main">
+                    <div class="popup_main" style="overflow: scroll;height: 300px;">
                         <form>
                             <table id="roomDetailTable" class="table table-striped">
                                 <tr>
@@ -152,8 +152,6 @@ if(!isset($_SESSION['user'])){
                                     
                                     <th></th>
                                 </tr>
-                                
-                                
                             </table>
                         </form>
                         

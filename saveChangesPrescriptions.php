@@ -5,7 +5,7 @@
 	$pk = $_POST['drugKey'];
 	$newDose = $_POST['dose'];
 	$newFreq = $_POST['freq'];
-	//$newEnd = $_POST['end'];
+	$newEnd = $_POST['end'];
 
 	/*
 	$stmt = "UPDATE patient SET firstName = \"" . $firstname . "\" , lastName = \"" . $lastname . "\" , roomNumber = " . $roomNum . " WHERE patientID =  " . $pk  . ";";
@@ -19,9 +19,9 @@
 		 echo "Unexpected error has occured. Error code 3.<br>";
 	 }
 	 */
-    $stmt = $connection->prepare("UPDATE prescriptionassignedtopatient SET dose = ?, timesPerDay = ? 
+    $stmt = $connection->prepare("UPDATE prescriptionassignedtopatient SET dose = ?, timesPerDay = ?, assignDateEnd = ? 
                                   WHERE patientID = ? AND drugID = ?;");
-    $stmt->bind_param('diii', $newDose, $newFreq, $patient, $pk);
+    $stmt->bind_param('disii', $newDose, $newFreq, $newEnd, $patient, $pk);
     $stmt->execute();
          if (!$stmt) {
                echo "There was a error with your data <a href='main.php'>click here</a> to return to the main menu.<br>";

@@ -2,6 +2,10 @@
 session_start();
 
 require_once 'functions.php';
+
+$stmt = "select d.diagnosisID, d.diagnosis, CONCAT('Assigned by: Dr. ',u.lastName) AS lastName from diagnosis AS d JOIN user AS u ON u.userID = d.userID where d.patientID = $_SESSION[patientID] and d.isInactive = 0";
+$displayDiag = mysqli_query($connection,$stmt);
+
 if(!isset($_SESSION['user'])){
     $page = "login.php";
 }
@@ -17,15 +21,15 @@ if (isset($_POST['treatmentID'])){
     
         $start = sanitizeString($_POST['start']);
 
-    
+    $diagnosis_ID = sanitizeString($_POST['availDiag']);
     
 
     if ($treatmentID == "" || $inst == "" || $start == "")
         $error = "Not all fields were entered<br>";
     else{
         
-        $stmt = $connection->prepare('call spAddTreatment(?,?,?,?,?)');				
-	   $stmt->bind_param('iissi',$_SESSION['patientID'],$treatmentID, $start, $inst, $_SESSION['id']);
+        $stmt = $connection->prepare('call spAddTreatment(?,?,?,?,?,?)');				
+	   $stmt->bind_param('iiissi',$_SESSION['patientID'],$treatmentID, $diagnosis_ID, $start, $inst, $_SESSION['id']);
         $stmt->execute();
          if (!$stmt) {
                echo "There was a error with your data <a href='main.php'>click here</a> to return to the main menu.<br>";
@@ -47,6 +51,7 @@ if (isset($_POST['treatmentID'])){
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <link rel="stylesheet" type="text/css" href="css/style.css">
         <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
@@ -109,14 +114,18 @@ if (isset($_POST['treatmentID'])){
     </a>
   </header>
 
+		<?php 
+		if ($displayDiag->num_rows > 0)
+      {
+          ?>
   <div class="container">
-      <form method="post" action="addtreatment.php" class="addtreatment"> <?php $error?>
+      <form method="post" id="addform" action="addtreatment.php" class="addtreatment"> <?php $error?>
           <div class="formHeader">Add a new Treatment</div>
           <div class="form">
               <div class="form-group">
                   <label for="treatmentID" >Treatment Name</label>
                   <input type="hidden" name="patientID" value="<?php echo $_SESSION['patientID']; ?>" >
-                  <select name = 'treatmentID' class="form-control">
+                  <select id="treatmentSelected" name = 'treatmentID' class="form-control">
                       <?php
                         $treatmentList = getTreatment();
                         while($treatmentOption = $treatmentList->fetch_row())
@@ -153,20 +162,71 @@ if (isset($_POST['treatmentID'])){
                   <input type="date" id="start" class="form-control" name="start" value="<?php $start ?>">
               </div>
               
-              <button type="submit" class="btn btn-outline-success " onclick="return checkDate();">Add Treatment</button>
+               <div class="form-group">
+                  <label for="availDiag" >Available Diagnosis</label>
+                  <input type="hidden" name="patientID" value="<?php echo $_SESSION['patientID']; ?>" >
+                  <select id="diagnosisSelected" name = 'availDiag' class="form-control">
+                      <?php
+                        while($diagOption = $displayDiag->fetch_row())
+                        {
+                            echo "<option value = '";
+                            $isFirst = 1;
+                            foreach($diagOption as $diagField)
+                            {
+                                if($isFirst)
+                                {
+                                    echo $diagField;
+                                    echo "' > ID: $diagField";
+                                    $isFirst = 0;
+
+                                }
+                                else
+                                {
+                                    echo " | $diagField ";
+                                }
+                            }
+                            echo "</option>";
+                        }
+                      ?>
+                  </select>
+              </div>
+              <button type="submit" id="treatmentBtn" class="btn btn-outline-success ">Add Treatment</button>
       </form>
   </div>
+  <?php }else { echo "<div class='container style=float: left;'>There are currently no diagnosis assigned to this patient. Please add a diagnosis."; } ?>
       <!--}else{
          echo "There is no data to be displayed please <a href='main.php'>add</a> some.";
       }-->
 
         <!-- Optional JavaScript -->
-        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
         <script>
+        function formatString(string) 
+        {
+            string = string.toLowerCase();
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+        
 		function checkDate()
 		{
+		    var instructionInput = formatString($("#instructions").val());
+		    
+		    $("#instructions").val(instructionInput);
+		    
+		    if(instructionInput == "")
+            {
+                alert("Instructions cannot be blank.");
+                return false;
+            }
+            
+            var regex = new RegExp(/^[A-Za-z0-9 ]+$/);
+            if(regex.test(instructionInput) == false)
+            {
+                alert("Instructions cannot contain special characters.");
+                return false;
+            }            
+            
 			var currentDate = new Date().toJSON().slice(0,10).replace(/-/g,'-');
 			if (start.value == "")
 			{
@@ -178,7 +238,49 @@ if (isset($_POST['treatmentID'])){
 				alert("You entered a date earlier than " + currentDate + ". Please try again.");
 				return false;
 			}
+			return true;
 		}
+		
+		$(document).ready(function(){
+		    var submitReady = 0;
+		    $("#addform").submit(function(e){
+            if(submitReady == 1)
+            {
+                return;
+            }
+            else
+            {
+                e.preventDefault();
+            }
+            });
+        
+            $("#treatmentBtn").click(function(){
+            
+                if(checkDate())
+                {
+                    var treatmentSelected = $("#treatmentSelected").val();
+                    var diagnosisSelected = $("#diagnosisSelected").val();
+                    $.ajax({
+                        url: "checkTreatment.php",
+                        type: "post",
+                        data: {patientID: <?php echo $_SESSION['patientID']; ?>, treatmentID: treatmentSelected, diagnosisID: diagnosisSelected },
+                        dataType: 'json',
+                        success:function(response){
+                            var len = response.length;
+                            if(len > 0)
+                            {
+                                alert("Warning! "+ response[0]['treatmentExists'] +" has assigned this patient the selected treatment already with the available diagnosis.");
+                            }
+                            else
+                            {
+                                submitReady = 1;
+                                $("#addform").submit();
+                            }
+                        }
+                    });
+                }
+            });
+		});
 		</script>
     </div>
     <footer class="footer">

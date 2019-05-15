@@ -115,7 +115,7 @@ if (isset($_POST['diagnosis'])){
   </header>
     <!--Main Content-->
   <div class="container">
-      <form method="post" action="adddiagnosis.php" class="addpatient"> <?php $error?>
+      <form method="post" id="addform" action="adddiagnosis.php" class="addpatient"> <?php $error?>
           <div class="formHeader">Add a new Patient Diagnosis</div>
 
           <!--Add New Patient Form-->
@@ -129,7 +129,7 @@ if (isset($_POST['diagnosis'])){
                   <input type="text" maxlength="255" id="notes" class="form-control" name="notes" value="<?php $notes ?>" required="required">
               </div>
               <form method='post' action='adddiagnosis.php' onsubmit='return true'>
-                    <button type="submit" class="btn btn-outline-success ">Add Diagnosis</button>
+                    <button type="submit" id="diagnosisBtn" class="btn btn-outline-success ">Add Diagnosis</button>
                 </form>
             </div>
         </form>
@@ -145,7 +145,92 @@ require_once 'functions.php';
         
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script>
+    var diagnosisInput;
+    var notesInput;
+    
+    function formatString(string) 
+    {
+        string = string.toLowerCase();
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
         
+    function validate()
+    {
+        diagnosisInput = formatString($("#diagnosis").val());
+        notesInput = formatString($("#notes").val());
+        
+        $("#diagnosis").val(diagnosisInput);
+        $("#notes").val(notesInput);
+        
+        if(diagnosisInput == "")
+        {
+            alert("Diagnosis cannot be blank.");
+            return false;
+        }
+        
+        if(notesInput == "")
+        {
+            alert("Doctor's notes cannot be blank.");
+            return false;
+        }
+        
+        var regex = new RegExp(/^[A-Za-z0-9 ]+$/);
+        
+        if(regex.test(diagnosisInput) == false)
+        {
+            alert("Diagnosis cannot contain special characters.");
+            return false;
+        }
+        
+        else if(regex.test(notesInput) == false)
+        {
+            alert("Doctor's notes cannot contain special characters.");
+            return false;
+        }
+        
+        return true;
+    }
+    
+    $(document).ready(function(){
+        var submitReady = 0;
+        $("#addform").submit(function(e){
+            if(submitReady == 1)
+            {
+                return;
+            }
+            else
+            {
+                e.preventDefault();
+            }
+        });
+        
+        $("#diagnosisBtn").click(function(){
+            if(validate())
+            {
+                $.ajax({
+                    url: "checkDiagnosis.php",
+                            type: "post",
+                            data: {patientID: <?php echo $_SESSION['patientID']; ?>, userID: <?php echo $_SESSION['id']; ?> },
+                            dataType: 'json',
+                            success:function(response){
+                                var len = response.length;
+                                
+                                if(len > 0)
+                                {
+                                    alert("Warning! You have assigned this patient a diagnosis, either edit the existing diagnosis or mark the current diagnosis as inactive.");
+                                }
+                                else
+                                {
+                                    submitReady = 1;
+                                    $("#addform").submit();
+                                }
+                            }
+                });
+            }
+        });
+    });
+</script>
     </div>
     <footer class="footer">
         <div class="container-fluid"><i class="fas fa-user"></i> Logged in as: <?php echo "$_SESSION[user]";?>

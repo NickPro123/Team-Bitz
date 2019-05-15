@@ -85,14 +85,24 @@ if (isset($_POST['firstName'])){
         {
             $lastID_result = mysqli_query($connection,"SELECT patientID FROM patient WHERE patientID = LAST_INSERT_ID()");
             $lastID = mysqli_fetch_assoc($lastID_result);
-            echo "<div class='container'><div class='row h3'>Patient Added. Would you like to assign a diagnosis?</div>";
-            echo "<div class='row'><div class='col'><form method='post' action='adddiagnosis.php' onsubmit='return true'>
-                    <button type='submit' name='patientID' value=". $lastID['patientID'] ." class='btn btn-outline-success' >Yes, add diagnosis</button>
-                </form></div>
-                <div class='col'>
-            <form method='post' action='main.php' onsubmit='return true'>
-                    <button type='submit' class='btn btn-outline-success' >No, return to main menu</button>
-                </form></div></div></div>";
+            
+            $query = $connection->prepare('call spAssignDoctor(?,?)');
+            $query->bind_param('ii',$lastID['patientID'],$_SESSION['id']);
+            $query->execute();
+            if(!$query){
+                echo "There was an error with your data <a href='main.php'>click here</a> to return to the main menu.<br>";
+            die($connection->error);
+            }
+            else{
+                echo "<div class='container'><div class='row h3'>Patient Added. Would you like to assign a diagnosis?</div>";
+                echo "<div class='row'><div class='col'><form method='post' action='adddiagnosis.php' onsubmit='return true'>
+                        <button type='submit' name='patientID' value=". $lastID['patientID'] ." class='btn btn-outline-success' >Yes, add diagnosis</button>
+                    </form></div>
+                    <div class='col'>
+                <form method='post' action='main.php' onsubmit='return true'>
+                        <button type='submit' class='btn btn-outline-success' >No, return to main menu</button>
+                    </form></div></div></div>";
+            }
         }
     }
 
@@ -164,15 +174,26 @@ require_once 'functions.php';
 <!-- JQuery to populate room dropdown -->
 <script>
 
+    function formatString(string) 
+    {
+        string = string.toLowerCase();
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+        
     function validate()
     {
         var fNameInput;
         var lNameInput;
         var roomInput;
         
-        fNameInput = $("#firstName").val();
-        lNameInput = $("#lastName").val();
+        
+        
+        fNameInput = formatString($("#firstName").val());
+        lNameInput = formatString($("#lastName").val());
         roomInput = $("#roomList").children("option:selected").val();
+        
+        $("#firstName").val(fNameInput);
+        $("#lastName").val(lNameInput);
         
         if(fNameInput == "")
         {

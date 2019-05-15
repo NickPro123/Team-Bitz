@@ -43,6 +43,7 @@ if (isset($_POST['drugID'])){
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <link rel="stylesheet" type="text/css" href="css/style.css">
         <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
         <link href="https://fonts.googleapis.com/css?family=Lato|Raleway:400,700,900" rel="stylesheet">
@@ -121,7 +122,7 @@ if (isset($_POST['drugID'])){
               <div class="form-group">
                   <label for="drugName" >Drug Name</label>
                   <input type="hidden" name="patientID" class="form-control" value="<?php echo $_SESSION['patientID']; ?>" >
-                  <select name = 'drugID' class="form-control">
+                  <select id="drugOption" name = 'drugID' class="form-control">
                       <?php
                         $drugList = getDrugs();
                         while($drugOption = $drugList->fetch_row())
@@ -170,7 +171,6 @@ if (isset($_POST['drugID'])){
       }-->
 
         <!-- Optional JavaScript -->
-        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
         		<script>
@@ -190,7 +190,7 @@ if (isset($_POST['drugID'])){
 		    }
 		    
 		    var freqInput;
-		    freqInput = freq.value;
+		    freqInput = $("#freq").val();
 		    if(isNaN(freqInput))
 		    {
 		        alert("Frequency must be a number.");
@@ -198,9 +198,15 @@ if (isset($_POST['drugID'])){
 		    }
 		    else if(freqInput <= 0)
 		    {
-		        alert("Frequency must be greater than zero.");
-		        return false;
+                alert("Frequency must be greater than zero.");
+                return false;
 		    }
+		    
+		    else if(Math.floor(freqInput) != freqInput)
+            {
+                alert("Frequency must be an interger.") 
+                return false;
+            }
 		    
 			var currentDate = new Date().toJSON().slice(0,10).replace(/-/g,'-');
 			if (end.value == "")
@@ -233,8 +239,27 @@ if (isset($_POST['drugID'])){
 		    $("#addBtn").click(function(){
 		       if(validate())
 		       {
-		           submitReady = 1;
-		           $("#addform").submit();
+		           var drugSelected = $("#drugOption").val();
+		           console.log(drugSelected);
+		           $.ajax({
+                    url: "checkPrescription.php",
+                            type: "post",
+                            data: {patientID: <?php echo $_SESSION['patientID']; ?>, userID: <?php echo $_SESSION['id']; ?>,drugID: drugSelected },
+                            dataType: 'json',
+                            success:function(response){
+                                var len = response.length;
+                                
+                                if(len > 0)
+                                {
+                                    alert("Warning! You have assigned this patient the selected medication, either edit the existing prescription or mark the current prescription as inactive.");
+                                }
+                                else
+                                {
+                                    submitReady = 1;
+                                    $("#addform").submit();
+                                }
+                            }
+                });
 		       }
 		    });
 		});

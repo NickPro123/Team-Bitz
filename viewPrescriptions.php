@@ -13,16 +13,46 @@ if(isset($_POST['patientID']) || isset($_SESSION['patientID']))
     }
 	else if(isset($_SESSION['patientID']))
 	    $id = $_SESSION['patientID'];
-	    
-	$result = queryMysql("SELECT d.drugID, d.medicineName, pap.dose, pap.timesPerDay, pap.userID, u.lastName
-	                      FROM drug as d 
-	                      JOIN prescriptionassignedtopatient as pap 
-	                      ON d.drugID = pap.drugID 
-	                      JOIN patient as pat 
-	                      ON pap.patientID = pat.patientID 
-	                      JOIN user AS u
-	                      ON pap.userID = u.userID
-	                      WHERE pat.patientID = '". $id ."'");  
+	
+	if(!isset($_POST['showInactive']))
+	{
+	    $showInactive = 0;
+	}
+	else if($_POST['showInactive'] == "View Inactive Prescriptions")
+	{
+	    $showInactive = 1;
+	}
+	else
+	{
+	    $showInactive = 0;
+	}
+	
+	if($showInactive == 0)
+	{
+	    $result = queryMysql("SELECT d.drugID, d.medicineName, pap.dose, pap.timesPerDay, pap.userID, u.lastName, pap.assignDateStart, pap.assignDateEnd
+	                          FROM drug as d 
+	                          JOIN prescriptionassignedtopatient as pap 
+	                          ON d.drugID = pap.drugID 
+	                          JOIN patient as pat 
+	                          ON pap.patientID = pat.patientID 
+    	                      JOIN user AS u
+	                          ON pap.userID = u.userID 
+                              AND pap.assignDateEnd >= CURDATE()
+	                          WHERE pat.patientID = '". $id ."'");  
+	}
+	else
+	{
+	    $result = queryMysql("SELECT d.drugID, d.medicineName, pap.dose, pap.timesPerDay, pap.userID, u.lastName, pap.assignDateStart, pap.assignDateEnd
+	                          FROM drug as d 
+	                          JOIN prescriptionassignedtopatient as pap 
+	                          ON d.drugID = pap.drugID 
+	                          JOIN patient as pat 
+	                          ON pap.patientID = pat.patientID 
+    	                      JOIN user AS u
+	                          ON pap.userID = u.userID 
+                              AND pap.assignDateEnd < CURDATE()
+	                          WHERE pat.patientID = '". $id ."'");  
+	}
 }
 else
 	{
@@ -77,6 +107,21 @@ else
                     </div>
                 </li>
             </ul>
+            <div class="form-inline my-2 ml-lg-2">
+                <form method='post' action='viewPrescriptions.php' onsubmit='return true'>
+                    <button name="showInactive" value="<?php
+                            if($showInactive == 0)
+                                $btnVal =  "View Inactive Prescriptions";
+                            else if($showInactive == 1)
+                                $btnVal = "View Active Prescriptions";
+                            echo $btnVal;
+                        ?>" type="submit" class="btn btn-outline-info ">
+                        <?php 
+                            echo $btnVal;
+                        ?>
+                    </button>
+                </form>
+            </div>
             <div class="form-inline my-2 ml-lg-2">
                 <form method='post' action='viewRoomInformation.php' onsubmit='return true'>
                     <button type="submit" class="btn btn-outline-warning ">View Room Information</button>
@@ -133,6 +178,8 @@ else
                 <th>Dose</th>
                 <th>Frequency</th>
                 <th>Prescribed By</th>
+                <th>Start Date</th>
+                <th>End Date</th>
                   <th></th>
 				  
               </tr>
@@ -160,6 +207,14 @@ else
 				<td>
 				    <input type="hidden" id="userID<?php echo $tableIndex ?>" value="<?php echo "$row[userID]"; ?>" >
 				    <a>Dr. </a><a id="userNameVal<?php echo $tableIndex ?>"><?php echo "$row[lastName]"; ?></a>
+				</td>
+				<td>
+				    <input type="hidden" id="startDate<?php echo $tableIndex ?>" value="<?php echo "$row[assignDateStart]"; ?>" >
+				    <a></a><a id="startDateVal<?php echo $tableIndex ?>"><?php echo "$row[assignDateStart]"; ?></a>
+				</td>
+				<td>
+				    <input type="hidden" id="endDate<?php echo $tableIndex ?>" value="<?php echo "$row[assignDateEnd]"; ?>" >
+				    <a></a><a id="endDateVal<?php echo $tableIndex ?>"><?php echo "$row[assignDateEnd]"; ?></a>
 				</td>
                   <td class="btnCol">
                       
@@ -202,6 +257,10 @@ else
                                     Frequency: (times per day)<br>
                                     <input type="text" id="detailFreq" class="form-control" name="detailFreq" readonly="readonly"><br>
                                 </div>
+                                <div class="col">
+                                    End Date:<br>
+                                    <input type="date" id="detailEnd" class="form-control" name="detailEnd" readonly="readonly"><br>
+                                </div>
                             </div>
                         </form>
                      <?php   if(isset($_SESSION['doctor'])){ ?>
@@ -226,11 +285,13 @@ else
 		var nameMenuItem = document.getElementById("detailDrugName");
 		var doseMenuItem = document.getElementById("detailDose");
 		var freqMenuItem = document.getElementById("detailFreq");
+		var endMenuItem = document.getElementById("detailEnd");
 		var isEditing = false;
 		var drugID;
 		var medicineName;
 		var dose;
 		var freq;
+		var end;
 		var recordIndex;
 		var saveBtn = document.getElementById("saveBtn");
         var saveHistoryBtn = document.getElementById("saveHistoryBtn");
@@ -296,16 +357,19 @@ else
 			var nameIndex = "drugName" + index + "";
 			var doseIndex = "medicineDose" + index + "";
 			var freqIndex = "freq" + index + "";
+			var endIndex = "endDate" + index + "";
 			
 			drugID = document.getElementById(IDIndex);
 			drugName = document.getElementById(nameIndex);
 			dose = document.getElementById(doseIndex);
 			freq = document.getElementById(freqIndex);
+			end = document.getElementById(endIndex);
 						
 			IDMenuItem.value = drugID.value;
 			nameMenuItem.value = drugName.value;
 			doseMenuItem.value = dose.value;
 			freqMenuItem.value = freq.value;
+			endMenuItem.value = end.value;
 			
 		}
         function closePopupMenu()
@@ -331,6 +395,7 @@ else
                 saveBtn.style.visibility = 'visible';
                 doseMenuItem.readOnly = false;
                 freqMenuItem.readOnly = false;
+                endMenuItem.readOnly = false;
                 successMsg.innerHTML = "";
                 isEditing = true;
             }
@@ -347,6 +412,7 @@ else
                 saveBtn.style.visibility = 'hidden';
                 doseMenuItem.readOnly = true;
                 freqMenuItem.readOnly = true;
+                endMenuItem.readOnly = true;
                 isEditing = false;
             }
         }
@@ -356,8 +422,12 @@ else
 				var pk = drugID.value;
 				var newDose = doseMenuItem.value;
 				var newFreq = freqMenuItem.value;
+				var newEnd = endMenuItem.value;
 				var updatedRecordDose = document.getElementById("medicineDoseVal" + recordIndex);
 				var updatedRecordFreq = document.getElementById("freqVal" + recordIndex);
+				var updatedRecordEnd = document.getElementById("endDateVal" + recordIndex);
+				
+				var currentDate = new Date().toJSON().slice(0,10).replace(/-/g,'-');
 			
 			    if($.isNumeric(newDose) && $.isNumeric(newFreq))
 			    {
@@ -365,20 +435,29 @@ else
 			        {
 				        if(Math.floor(newFreq) == newFreq)
 				        {
-				            $.ajax({
-    					        url: "saveChangesPrescriptions.php",
-	    				        method: "post",
-		    			        data: { patient: patientID, drugKey: pk, dose: newDose, freq: newFreq},
-			    		        success: function(response){
-				    	    	    console.log(response);
-					        	    $(updatedRecordDose).text(newDose);
-					        	    $(updatedRecordFreq).text(newFreq);
+				            if(!(newEnd < currentDate))
+				            {
+				                $.ajax({
+    					            url: "saveChangesPrescriptions.php",
+	    				           method: "post",
+		    		    	        data: { patient: patientID, drugKey: pk, dose: newDose, freq: newFreq, end: newEnd},
+			    	    	        success: function(response){
+				        	    	    console.log(response);
+					             	    $(updatedRecordDose).text(newDose);
+					             	    $(updatedRecordFreq).text(newFreq);
+					             	    $(updatedRecordEnd).text(newEnd);
 						   
-    					     	    $(dose).val(newDose);
-	    				        	$(freq).val(newFreq);
-		    			    	    saveDetails();
-			    		        }
-				            });
+    				    	     	    $(dose).val(newDose);
+	    			    	        	$(freq).val(newFreq);
+	    			    	        	$(end).val(newEnd);
+		    		    	    	    saveDetails();
+			    	    	        }
+				                });
+				            }
+				            else
+				            {
+				                alert("You entered a date eariler than " + currentDate + ". Please try again.");
+				            }
 				        }
 				        else
 				        {

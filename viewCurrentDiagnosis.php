@@ -19,7 +19,7 @@ if(isset($_POST['patientID']) || isset($_SESSION['patientID']))
 	{
 	    if($_POST['showInactive'] == 'Show Inactive Diagnoses')
 	    {
-	        $result = queryMysql("SELECT u.userID, u.lastName, d.diagnosis, d.doctorNotes, d.dateAssigned
+	        $result = queryMysql("SELECT u.userID, u.lastName, d.diagnosis, d.doctorNotes, d.dateAssigned, d.diagnosisID
 	                      FROM patient AS p
 	                      JOIN diagnosis AS d
 	                      ON p.patientID = d.patientID
@@ -30,7 +30,7 @@ if(isset($_POST['patientID']) || isset($_SESSION['patientID']))
 	    }
 	    else
 	    {
-	        $result = queryMysql("SELECT u.userID, u.lastName, d.diagnosis, d.doctorNotes, d.dateAssigned
+	        $result = queryMysql("SELECT u.userID, u.lastName, d.diagnosis, d.doctorNotes, d.dateAssigned, d.diagnosisID
 	                      FROM patient AS p
 	                      JOIN diagnosis AS d
 	                      ON p.patientID = d.patientID
@@ -43,7 +43,7 @@ if(isset($_POST['patientID']) || isset($_SESSION['patientID']))
 	else
 	{
 	
-	    $result = queryMysql("SELECT u.userID, u.lastName, d.diagnosis, d.doctorNotes, d.dateAssigned
+	    $result = queryMysql("SELECT u.userID, u.lastName, d.diagnosis, d.doctorNotes, d.dateAssigned, d.diagnosisID
 	                          FROM patient AS p
 	                          JOIN diagnosis AS d
 	                          ON p.patientID = d.patientID
@@ -106,6 +106,25 @@ else
                 </li>
             </ul>
             <div class="form-inline my-2 ml-lg-2">
+			    <form method="post" onsubmit="return true" action="viewCurrentDiagnosis.php">
+			        <button name="showInactive" type="submit" class="btn btn-outline-info " value="<?php 
+						$btnVal = "";
+						if($showInactive == 1)
+						{
+							$btnVal = "Show Active Diagnoses";
+						}
+						else
+						{
+							$btnVal = "Show Inactive Diagnoses";
+						}
+						echo $btnVal;
+						?>">
+			            <?php echo $btnVal; ?>
+			        </button>
+					
+			</form>
+		  </div>
+            <div class="form-inline my-2 ml-lg-2">
                 <form method='post' action='viewRoomInformation.php' onsubmit='return true'>
                     <button type="submit" class="btn btn-outline-warning ">View Room Information</button>
                 </form>
@@ -130,26 +149,6 @@ else
         <div class="center">
           <h1><?php $nameOfPatient = getPatientName($_SESSION['patientID']); 
 			echo "$nameOfPatient[firstName] $nameOfPatient[lastName]";?> - Diagnosis Menu </h1>
-			<div class="toggleInactivePatientDiv" style= "width: 50%;  margin-left: auto; margin-right: auto;">
-			  <form method="post" onsubmit="return true" action="viewCurrentDiagnosis.php">
-			<input type="submit" name="showInactive" onChange="this.form.submit();" <?php 
-								if(isset($_POST['showInactive']))
-								{
-									if($_POST['showInactive'] == "Show Inactive Diagnoses")
-									{
-										echo "value = 'Show Active Diagnoses'";
-									}
-									else
-									{
-										echo "value = 'Show Inactive Diagnoses'";
-									}
-								}
-								else
-								{
-									echo "value = 'Show Inactive Diagnoses'";
-								}?>   />
-			</form>
-		  </div>
                 <?php if ($result->num_rows > 0)
       {
           ?>
@@ -175,6 +174,7 @@ else
          <table id="patientViewTable" class="table table-striped">
               <tr>
 				  <th></th>
+				<th>Diagnosis ID </th>
                 <th>Doctor</th>
                 <th>Diagnosis</th>
                 <th>Notes</th>
@@ -190,6 +190,12 @@ else
             
               <tr>
 				<td></td>
+								
+				<td>
+					<input type='hidden' id="diagID<?php echo $tableIndex ?>" value="<?php echo "$row[diagnosisID]"; ?>" >
+					 <a id="diagnosisIDVal<?php echo $tableIndex ?>"><?php echo "$row[diagnosisID] ";?></a>
+				</td>
+				
                 <td>
                     <input type='hidden' id="userID<?php echo $tableIndex ?>" value="<?php echo $row['userID'] ?>">
                     <a>Dr. </a>
@@ -257,8 +263,8 @@ else
                         <button id="inactiveBtn">Mark as Inactive</button>
                         <?php } ?>
                         
-                        <img id= "editBtn" src="images/edit_mode.png" style="cursor: pointer; max-width: 50px; max-height: 50px; margin-left:10px; margin-top: 10px;" onClick="enableEditMode();" >
-                        <button id = "saveBtn" onClick="saveDetails();">Save Changes</button>
+                        <img <?php if($showInactive == 1){ ?>style="display:none" <?php } ?> id= "editBtn" src="images/edit_mode.png" style="cursor: pointer; max-width: 50px; max-height: 50px; margin-left:10px; margin-top: 10px;" onClick="enableEditMode();" >
+                        <button id = "saveBtn">Save Changes</button>
                         <?php }?> 
                     </div>
                     <div id="close_popup_div">
@@ -404,6 +410,45 @@ else
             }
         }
         
+        function formatString(string) 
+        {
+            string = string.toLowerCase();
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+        
+        function validate(diagInput,notesInput)
+        {
+        
+            if(diagInput == "")
+            {
+                alert("Diagnosis name cannot be blank.");
+                return false;
+            }
+        
+            if(notesInput == "")
+            {
+                alert("Notes cannot be blank.");
+                return false;
+            }
+        
+            var regex = new RegExp(/^[A-Za-z0-9 ]+$/);
+        
+            if(regex.test(diagInput) == false)
+            {
+                alert("Diagnosis name cannot contain special characters.");
+                return false;
+            }
+        
+             else if(regex.test(notesInput) == false)
+             {
+                alert("Doctors notes cannot contain special characters.");
+                return false;
+             }
+        
+        
+        return true;
+    }
+        
         $(document).ready(function(){
             $("#inactiveBtn").click(function(){
                 var userIndex = "#userID" + recordIndex;
@@ -437,24 +482,28 @@ else
 		$(document).ready(function(){
 			$("#saveBtn").click(function(){
 				var uID = document.getElementById("userID" + recordIndex).value;
-				var newDiagnosis = diagMenuItem.value;
-				var newNotes = notesMenuItem.value;
+				var newDiagnosis = formatString(diagMenuItem.value);
+				var newNotes = formatString(notesMenuItem.value);
 				var updatedRecordDiag = document.getElementById("diagnosisVal" + recordIndex);
 				var updatedRecordNotes = document.getElementById("notesVal" + recordIndex);
-			
-				$.ajax({
-					url: "saveChangesDiagnosis.php",
-					method: "post",
-					data: { patient: patientID, userID: uID, diagnosis: newDiagnosis, notes: newNotes},
-					success: function(response){
-						console.log(response);
-						$(updatedRecordDiag).text(newDiagnosis);
-						$(updatedRecordNotes).text(newNotes);
+			     
+			    if((validate(newDiagnosis, newNotes)) == true)
+			    {
+			    	$.ajax({
+	    				url: "saveChangesDiagnosis.php",
+		    			method: "post",
+	    				data: { patient: patientID, userID: uID, diagnosis: newDiagnosis, notes: newNotes},
+	    				success: function(response){
+	    					console.log(response);
+	    					$(updatedRecordDiag).text(newDiagnosis);
+	    					$(updatedRecordNotes).text(newNotes);
 						
-						$(diagnosis).val(newDiagnosis);
-						$(notes).val(newNotes);
-					}
-				});
+	    					$(diagnosis).val(newDiagnosis);
+    						$(notes).val(newNotes);
+    						saveDetails();
+    					}
+    				});
+			    }
 			});
 		});
 		

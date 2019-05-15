@@ -55,7 +55,7 @@ h3{
     }
 
 /* Style inputs */
-input[type=text], input[type=password], select {
+input[type=text], input[type=password],input[type=date], select {
     width: 100%;
     padding: 12px 20px;
     margin: 8px 0;
@@ -190,7 +190,7 @@ button:hover {
 }
 
 #close_popup_div p{
-    margin-top: 0;
+    margin-top: -2px;
     cursor: pointer;
 }
 

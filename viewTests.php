@@ -363,16 +363,24 @@ else
             }
         }
         <?php }?>
+        
+        function formatString(string) 
+        {
+            string = string.toLowerCase();
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+        
 		$(document).ready(function(){
 			$("#saveBtn").click(function(){
 				
 				var testpk = testID.value;
 				var newStart = startMenuItem.value;
-				var newResult = resultMenuItem.value;
+				var newResult = formatString(resultMenuItem.value);
 				var updatedRecordStart = document.getElementById("startDateVal" + recordIndex);
 				var updatedRecordResult = document.getElementById("resultVal" + recordIndex);
 			    
 			    var currentDate = new Date().toJSON().slice(0,10).replace(/-/g,'-');
+			    var regex = new RegExp(/^[A-Za-z0-9 ]+$/);
 			    if (newStart == "")
 			    {
 				    alert("You didn't enter a date. Please enter one.");
@@ -380,6 +388,10 @@ else
 		    	else if (newStart < currentDate)
 			    {
 			    	alert("You entered a date earlier than " + currentDate + ". Please try again.");
+			    }
+			    else if(regex.test(newResult) == false)
+			    {
+			        alert("Test result cannot contain special characters.")
 			    }
 			    else
 			    {
