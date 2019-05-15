@@ -45,6 +45,7 @@ if (isset($_POST['dept'])){
 <html lang="en">
     <head>
         <link rel="stylesheet" type="text/css" href="css/style.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
         <link href="https://fonts.googleapis.com/css?family=Lato|Raleway:400,700,900" rel="stylesheet">
@@ -89,7 +90,7 @@ if (isset($_POST['dept'])){
     </a>
   </header>
   <div class="container">
-      <form method="post" action="addRoom.php" class="addprescription"> <?php $error?>
+      <form method="post" id="roomForm" action="addRoom.php" class="addprescription"> <?php $error?>
           <div class="formHeader">Add a new room</div>
           <div class="form">
 		    <div class="form-group">
@@ -105,7 +106,7 @@ if (isset($_POST['dept'])){
                           {
                             while ($row = mysqli_fetch_assoc($result))
                             {
-                                echo '<option value=" '.$row['departmentID'].' "> '.$row['departmentID']. ' - ' .$row['departmentName'].'</option>';
+                                echo '<option value=" '.$row['departmentID'].' "> '.$row['departmentID']. ' | ' .$row['departmentName'].'</option>';
                             }
                           }
                     ?>
@@ -113,7 +114,7 @@ if (isset($_POST['dept'])){
               </div>
 
               <div class="form-group">
-                  <label for="roomDescript">Desciption</label>
+                  <label for="roomDescript">Description</label>
                   <input type="text" maxlength="150" id="roomDescript" class="form-control" name="roomDescript" value="<?php $roomDescript?>" required="required">
               </div>
 
@@ -122,7 +123,7 @@ if (isset($_POST['dept'])){
                   <input type="text" maxlength="10" id="maxCap" class="form-control" name="maxCap" value="<?php $maxCap?>" required="required">
               </div>
               
-              <button type="submit" class="btn btn-outline-success ">Add room</button>
+              <button type="button" id="roomBtn" class="btn btn-outline-success" >Add room</button>
       </form>
   </div>
       <!--}else{
@@ -130,9 +131,125 @@ if (isset($_POST['dept'])){
       }-->
 
         <!-- Optional JavaScript -->
-        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+        <script>
+            var roomValue;
+            var regex = new RegExp(/^[A-Za-z0-9 ]+$/);
+            
+            function validate()
+            {
+                
+                roomValue = $("#roomNmb").val();
+                if(isNaN(roomValue))
+                {
+                    alert("Room number must be a number.");
+                    return false;
+                }
+                else if(roomValue == Math.floor(roomValue))
+                {
+                    var digitCount = roomValue.toString().length;
+                    if(digitCount != 3)
+                    {
+                        alert("Room number must be 3 digits.");
+                        return false;
+                    }
+                    else
+                    {
+                        if(roomValue <= 0)
+                        {
+                            alert("Room number must be greater than zero.");
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    alert("Room number must be a whole number.");
+                    return false;
+                }
+                
+                var descriptionValue;
+                descriptionValue = $("#roomDescript").val();
+                
+                if(descriptionValue == "")
+                {
+                    alert("Description cannot be blank.");
+                    return false;
+                }
+                else if(regex.test(descriptionValue) == false)
+                {
+                    alert("Description cannot contain special characters.");
+                    return false;
+                }
+                
+                var maxCapValue = $("#maxCap").val();
+                if(isNaN(maxCapValue))
+                {
+                    alert("Max capacity must be a number.");
+                    return false;
+                }
+                else if(maxCapValue == Math.floor(maxCapValue))
+                {
+                    if(maxCapValue <= 0)
+                    {
+                        alert("Max capacity must be greater than zero.");
+                        return false;
+                    }
+                    else if(maxCapValue > 100)
+                    {
+                        alert("Max capacity must be less than 100.");
+                        return false;
+                    }
+                }
+                else
+                {
+                    alert("Max capacity must be a whole number.");
+                    return false;
+                }
+                return true;
+            }
+            $(document).ready(function(){
+                var submitReady = 0;
+                $("#roomForm").submit(function(e){
+                    if(submitReady)
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        e.preventDefault();
+                    }
+                });
+                
+                $("#roomBtn").click(function(){
+                    
+                    if(validate())
+                    {
+                        $.ajax({
+                            url: "checkRoomNum.php",
+                            type: "post",
+                            data: {room: roomValue},
+                            dataType: 'json',
+                            success:function(response){
+                                var len = response.length;
+                                
+                                if(len > 0)
+                                {
+                                    alert("Warning! Room number, "+ roomValue + " already exist.");
+                                }
+                                else
+                                {
+                                    submitReady = 1;
+                                    $("#roomForm").submit();
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+        </script>
     </div>
     <footer class="footer">
         <div class="container-fluid"><i class="fas fa-user"> </i> Logged in as: <?php echo "$_SESSION[user]";?>

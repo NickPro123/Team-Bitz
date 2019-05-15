@@ -14,13 +14,43 @@ if(isset($_POST['patientID']) || isset($_SESSION['patientID']))
 	else if(isset($_SESSION['patientID']))
 	    $id = $_SESSION['patientID'];
 	    
-	$result = queryMysql("SELECT u.userID, u.lastName, d.diagnosis, d.doctorNotes, d.dateAssigned
+	$showInactive = 0;
+	if(isset($_POST['showInactive']))
+	{
+	    if($_POST['showInactive'] == 'Show Inactive Diagnoses')
+	    {
+	        $result = queryMysql("SELECT u.userID, u.lastName, d.diagnosis, d.doctorNotes, d.dateAssigned, d.diagnosisID
 	                      FROM patient AS p
 	                      JOIN diagnosis AS d
 	                      ON p.patientID = d.patientID
 	                      JOIN user AS u
 	                      ON d.userID = u.userID
-	                      WHERE d.patientID = '". $id ."'");  
+	                      WHERE d.isInactive = 1 AND d.patientID = '". $id ."'"); 
+	        $showInactive = 1;
+	    }
+	    else
+	    {
+	        $result = queryMysql("SELECT u.userID, u.lastName, d.diagnosis, d.doctorNotes, d.dateAssigned, d.diagnosisID
+	                      FROM patient AS p
+	                      JOIN diagnosis AS d
+	                      ON p.patientID = d.patientID
+	                      JOIN user AS u
+	                      ON d.userID = u.userID
+	                      WHERE d.isInactive = 0 AND d.patientID = '". $id ."'"); 
+	        //$showInactive = 0;
+	    }
+	}
+	else
+	{
+	
+	    $result = queryMysql("SELECT u.userID, u.lastName, d.diagnosis, d.doctorNotes, d.dateAssigned, d.diagnosisID
+	                          FROM patient AS p
+	                          JOIN diagnosis AS d
+	                          ON p.patientID = d.patientID
+	                          JOIN user AS u
+	                          ON d.userID = u.userID
+	                          WHERE d.isInactive = 0 AND d.patientID = '". $id ."'");  
+	}
 }
 else
 	{
@@ -76,6 +106,25 @@ else
                 </li>
             </ul>
             <div class="form-inline my-2 ml-lg-2">
+			    <form method="post" onsubmit="return true" action="viewCurrentDiagnosis.php">
+			        <button name="showInactive" type="submit" class="btn btn-outline-info " value="<?php 
+						$btnVal = "";
+						if($showInactive == 1)
+						{
+							$btnVal = "Show Active Diagnoses";
+						}
+						else
+						{
+							$btnVal = "Show Inactive Diagnoses";
+						}
+						echo $btnVal;
+						?>">
+			            <?php echo $btnVal; ?>
+			        </button>
+					
+			</form>
+		  </div>
+            <div class="form-inline my-2 ml-lg-2">
                 <form method='post' action='viewRoomInformation.php' onsubmit='return true'>
                     <button type="submit" class="btn btn-outline-warning ">View Room Information</button>
                 </form>
@@ -125,6 +174,7 @@ else
          <table id="patientViewTable" class="table table-striped">
               <tr>
 				  <th></th>
+				<th>Diagnosis ID </th>
                 <th>Doctor</th>
                 <th>Diagnosis</th>
                 <th>Notes</th>
@@ -140,6 +190,12 @@ else
             
               <tr>
 				<td></td>
+								
+				<td>
+					<input type='hidden' id="diagID<?php echo $tableIndex ?>" value="<?php echo "$row[diagnosisID]"; ?>" >
+					 <a id="diagnosisIDVal<?php echo $tableIndex ?>"><?php echo "$row[diagnosisID] ";?></a>
+				</td>
+				
                 <td>
                     <input type='hidden' id="userID<?php echo $tableIndex ?>" value="<?php echo $row['userID'] ?>">
                     <a>Dr. </a>
@@ -162,7 +218,7 @@ else
                       <button id= "detailBtn" onclick="openPopupMenu(<?php echo $tableIndex ?>)" class="btn btn-outline-success">Details</button>
                 </td>
               </tr>
-            <?php ; $tableIndex++; } }else echo "<div class='container style=float: left;'>There are currently no diagnoses assigned to this patient. Assign a diagnoses below </div>"?>
+            <?php ; $tableIndex++; } }else { echo "<div class='container style=float: left;'>There are currently no diagnoses assigned to this patient."; if(isset($_SESSION['doctor'])){ echo " Assign a diagnosis below. "; } echo"</div>"; } ?>
 </table>
           
      <?php if(isset($_SESSION['doctor'])){ ?>
@@ -182,28 +238,33 @@ else
                             <div class="form-row">
                                 <div class="col">
                                     Assigned By: <br>
-                                    <input type="text" id="detailDoctor" name="detailDoctor" readonly="readonly">
+                                    <input type="text" id="detailDoctor" class="form-control" name="detailDoctor" readonly="readonly">
                                 </div>
                                 <div class="col">
                                     Diagnosis: <br>
-                                    <input type="text" id="detailDiagnosis" name="detailDiagnosis" readonly="readonly"><br>
+                                    <input type="text" id="detailDiagnosis" class="form-control" name="detailDiagnosis" readonly="readonly"><br>
                                 </div>
                                 <div class="col">
                                     Date Assigned: <br>
-                                    <input type="text" id="detailDate" name="detailDate" readonly="readonly"><br>
+                                    <input type="date" id="detailDate" class="form-control" name="detailDate" readonly="readonly"><br>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="col">
                                     Doctor Notes: <br>
-                                    <input type="text" id="detailNotes" name="detailNotes" readonly="readonly"><br>
+                                    <input type="text" id="detailNotes" class="form-control" name="detailNotes" readonly="readonly"><br>
                                 </div>
                             </div>
                         </form>
-                     <?php   if(isset($_SESSION['doctor'])){ ?>
+                     <?php   if(isset($_SESSION['doctor'])){ 
+                     
+                        if($showInactive == 0){?>
 
-                        <img id= "editBtn" src="images/edit_mode.png" style="cursor: pointer; max-width: 50px; max-height: 50px; margin-left:10px; margin-top: 10px;" onClick="enableEditMode();" >
-                        <button id = "saveBtn" onClick="saveDetails();">Save Changes</button>
+                        <button id="inactiveBtn">Mark as Inactive</button>
+                        <?php } ?>
+                        
+                        <img <?php if($showInactive == 1){ ?>style="display:none" <?php } ?> id= "editBtn" src="images/edit_mode.png" style="cursor: pointer; max-width: 50px; max-height: 50px; margin-left:10px; margin-top: 10px;" onClick="enableEditMode();" >
+                        <button id = "saveBtn">Save Changes</button>
                         <?php }?> 
                     </div>
                     <div id="close_popup_div">
@@ -294,11 +355,18 @@ else
 			diagnosis = document.getElementById(diagIndex);
 			notes = document.getElementById(notesIndex);
 			date = document.getElementById(dateIndex);
+			
+			var myDate = new Date(date.value);
+			var formattedMonth = myDate.getMonth() + 1;
+			formattedMonth = formattedMonth.toString().padStart(2,'0');
+			var formattedDay = myDate.getDate();
+			formattedDay = formattedDay.toString().padStart(2,'0');
+			var formattedDate = myDate.getFullYear() + "-" + formattedMonth + "-" + formattedDay;
 						
 			doctorMenuItem.value = doctor.text;
 			diagMenuItem.value = diagnosis.value;
 			notesMenuItem.value = notes.value;
-			dateMenuItem.value = date.value;
+			dateMenuItem.value = formattedDate;
 			
 		}
         function closePopupMenu()
@@ -341,28 +409,101 @@ else
                 isEditing = false;
             }
         }
+        
+        function formatString(string) 
+        {
+            string = string.toLowerCase();
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+        
+        function validate(diagInput,notesInput)
+        {
+        
+            if(diagInput == "")
+            {
+                alert("Diagnosis name cannot be blank.");
+                return false;
+            }
+        
+            if(notesInput == "")
+            {
+                alert("Notes cannot be blank.");
+                return false;
+            }
+        
+            var regex = new RegExp(/^[A-Za-z0-9 ]+$/);
+        
+            if(regex.test(diagInput) == false)
+            {
+                alert("Diagnosis name cannot contain special characters.");
+                return false;
+            }
+        
+             else if(regex.test(notesInput) == false)
+             {
+                alert("Doctors notes cannot contain special characters.");
+                return false;
+             }
+        
+        
+        return true;
+    }
+        
+        $(document).ready(function(){
+            $("#inactiveBtn").click(function(){
+                var userIndex = "#userID" + recordIndex;
+                var userID = $(userIndex).val();
+                
+                if(userID == <?php echo $_SESSION['id'] ?> )
+                {
+                    var dialog = confirm("Are you sure? This action cannot be undone.");
+                
+                    if(dialog == true)
+                    {
+                        $.ajax({
+                            url: "setDiagnosisInactive.php",
+                            method: "post",
+                            data:{patientPK: <?php echo $id ?>, userPK: userID},
+                            success: function(response){
+                                window.location.reload();
+                            }
+                        })
+                    }
+                }
+                else
+                {
+                    alert("Only diagnoses you assigned can be made inactive.");
+                }
+                
+                
+            })
+        })
         <?php }?>
 		$(document).ready(function(){
 			$("#saveBtn").click(function(){
 				var uID = document.getElementById("userID" + recordIndex).value;
-				var newDiagnosis = diagMenuItem.value;
-				var newNotes = notesMenuItem.value;
+				var newDiagnosis = formatString(diagMenuItem.value);
+				var newNotes = formatString(notesMenuItem.value);
 				var updatedRecordDiag = document.getElementById("diagnosisVal" + recordIndex);
 				var updatedRecordNotes = document.getElementById("notesVal" + recordIndex);
-			
-				$.ajax({
-					url: "saveChangesDiagnosis.php",
-					method: "post",
-					data: { patient: patientID, userID: uID, diagnosis: newDiagnosis, notes: newNotes},
-					success: function(response){
-						console.log(response);
-						$(updatedRecordDiag).text(newDiagnosis);
-						$(updatedRecordNotes).text(newNotes);
+			     
+			    if((validate(newDiagnosis, newNotes)) == true)
+			    {
+			    	$.ajax({
+	    				url: "saveChangesDiagnosis.php",
+		    			method: "post",
+	    				data: { patient: patientID, userID: uID, diagnosis: newDiagnosis, notes: newNotes},
+	    				success: function(response){
+	    					console.log(response);
+	    					$(updatedRecordDiag).text(newDiagnosis);
+	    					$(updatedRecordNotes).text(newNotes);
 						
-						$(diagnosis).val(newDiagnosis);
-						$(notes).val(newNotes);
-					}
-				});
+	    					$(diagnosis).val(newDiagnosis);
+    						$(notes).val(newNotes);
+    						saveDetails();
+    					}
+    				});
+			    }
 			});
 		});
 		

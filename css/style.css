@@ -1,21 +1,4 @@
-html{
-    height: 100%;
-}
 
-@media (max-width: 740px) {
-    html,
-    body,
-    header,
-    .view {
-        height: 100vh;
-    }
-}
-
-@media (max-width: 991px) {
-    .navbar:not(.top-nav-collapse) {
-       background: #ffffff !important;
-    }
-}
 
 html{
     font-family: 'Lato', sans-serif;
@@ -72,7 +55,7 @@ h3{
     }
 
 /* Style inputs */
-input[type=text], input[type=password], select {
+input[type=text], input[type=password],input[type=date], select {
     width: 100%;
     padding: 12px 20px;
     margin: 8px 0;
@@ -207,7 +190,7 @@ button:hover {
 }
 
 #close_popup_div p{
-    margin-top: 0;
+    margin-top: -2px;
     cursor: pointer;
 }
 
@@ -246,5 +229,9 @@ table {
     width: 50%;  
     margin-left: auto; 
     margin-right: auto;
+}
+
+#detailStart{
+    padding-top: 3px;
 }
 

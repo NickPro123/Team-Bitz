@@ -36,6 +36,7 @@ if (isset($_POST['testID'])){
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <link rel="stylesheet" type="text/css" href="css/style.css">
         <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
@@ -96,13 +97,13 @@ if (isset($_POST['testID'])){
     </a>
   </header>
   <div class="container">
-      <form method="post" action="addtest.php" class="addtest"> <?php $error?>
+      <form method="post" id="addform" action="addtest.php" class="addtest"> <?php $error?>
           <div class="formHeader">Add a new Test</div>
           <div class="form">
               <div class="form-group">
                   <label for="testName" >Test Name</label>
                   <input type="hidden" name="patientID" value="<?php echo $_SESSION['patientID']; ?>" >
-                  <select name = 'testID' class="form-control">
+                  <select id="testSelected" name = 'testID' class="form-control">
                       <?php
                         $testList = getTests();
                         while($testOption = $testList->fetch_row())
@@ -134,16 +135,73 @@ if (isset($_POST['testID'])){
                   <input type="date" id="start" name="start" class="form-control" required="required" value="<?php $start ?>">
               </div>
               
-              <button type="submit" class="btn btn-outline-success ">Add Test</button>
+              <button type="submit" id="testBtn" class="btn btn-outline-success ">Add Test</button>
       </form>
   </div>
       <!--}else{
          echo "There is no data to be displayed please <a href='main.php'>add</a> some.";
       }-->
         <!-- Optional JavaScript -->
-        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+        <script>
+		function checkDate()
+		{
+			var currentDate = new Date().toJSON().slice(0,10).replace(/-/g,'-');
+			if (start.value == "")
+			{
+				alert("You didn't enter a date. Please enter one.");
+				return false;
+			}
+			else if (start.value < currentDate)
+			{
+				alert("You entered a date earlier than " + currentDate + ". Please try again.");
+				return false;
+			}
+			
+			return true;
+		}
+		
+		$(document).ready(function(){
+		    var submitReady = 0;
+		    $("#addform").submit(function(e){
+            if(submitReady == 1)
+            {
+                return;
+            }
+            else
+            {
+                e.preventDefault();
+            }
+        });
+        
+        $("#testBtn").click(function(){
+            if(checkDate())
+            {
+                var testSelected = $("#testSelected").val();
+                $.ajax({
+                    url: "checkTest.php",
+                            type: "post",
+                            data: {patientID: <?php echo $_SESSION['patientID']; ?>, userID: <?php echo $_SESSION['id']; ?>, testID: testSelected },
+                            dataType: 'json',
+                            success:function(response){
+                                var len = response.length;
+                                
+                                if(len > 0)
+                                {
+                                    alert("Warning! You have assigned this patient the selected test already. Please update the existing test to show new results.");
+                                }
+                                else
+                                {
+                                    submitReady = 1;
+                                    $("#addform").submit();
+                                }
+                            }
+                });
+            }
+        });
+		});
+		</script>
     </div>
     <footer class="footer">
         <div class="container-fluid"><i class="fas fa-user"></i> Logged in as: <?php echo "$_SESSION[user]";?>

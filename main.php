@@ -5,20 +5,25 @@ if(!isset($_SESSION['user'])){
     header("Location:login.php");
 }
 
-if(!isset($_POST['deptID']))
+if(!isset($_POST['deptID']) && !isset($_SESSION['deptID']))
 {
     $deptID = getUserDept($_SESSION['user']);
 }
-else
+else if(isset($_POST['deptID']))
 {
     $deptID = $_POST['deptID'];
+    $_SESSION['deptID'] = $deptID;
+}
+else if(isset($_SESSION['deptID']))
+{
+    $deptID = $_SESSION['deptID'];
 }
 
 //in the event that the user doesnt have a type, use the default(deptID = 1 or general care dept)
-if(!isset($deptID))
-{
-    $deptID = 1;
-}
+//if(!isset($deptID))
+//{
+//    $deptID = getUser
+//}
 
 $showInactive = 0;
 if(isset($_POST['showInactive']))
@@ -27,11 +32,17 @@ if(isset($_POST['showInactive']))
 	{
 	    $showInactive = 1;
 	    $deptID = -1;
-		$result = queryMysql("SELECT p.patientID, p.firstName, p.lastName,  p.roomNumber, diag.diagnosis
+		$result = queryMysql("SELECT DISTINCT p.patientID, p.firstName, p.lastName, (SELECT MAX(dischargeDate) FROM patienthistory WHERE patientID = p.patientID) AS dischargeDate ,  p.roomNumber, diag.diagnosis
 		                      FROM patient AS p
 		                      LEFT JOIN diagnosis AS diag
 		                      ON p.patientID = diag.patientID
-		                      WHERE p.roomNumber IS NULL");
+		                      AND diag.dateAssigned IN (SELECT MAX(dateAssigned)
+                                                            FROM diagnosis
+                                                            GROUP BY patientID)
+                              JOIN patienthistory AS history
+                              ON p.patientID = history.patientID
+		                      WHERE p.roomNumber IS NULL
+		                      ORDER BY p.patientID");
 	}
 	
 	else
@@ -47,7 +58,12 @@ if(isset($_POST['showInactive']))
 	                             ON r.departmentID = d.departmentID
 	                             LEFT JOIN diagnosis AS diag
 	                              ON p.patientID = diag.patientID
-    	                          WHERE p.roomNumber IS NOT NULL AND d.departmentID = ". $deptID);
+	                              AND diag.dateAssigned IN (SELECT MAX(dateAssigned)
+                                                            FROM diagnosis
+                                                            GROUP BY patientID
+                                                            HAVING isInactive = 0)
+    	                          WHERE p.roomNumber IS NOT NULL AND d.departmentID = ". $deptID."
+    	                          ORDER BY p.patientID");
 	    }
 	    else
 	    {
@@ -60,7 +76,12 @@ if(isset($_POST['showInactive']))
 	                             ON r.departmentID = d.departmentID
 	                             LEFT JOIN diagnosis AS diag
 	                              ON p.patientID = diag.patientID
-    	                          WHERE p.roomNumber IS NOT NULL");
+	                              AND diag.dateAssigned IN (SELECT MAX(dateAssigned)
+                                                            FROM diagnosis
+                                                            GROUP BY patientID
+                                                            HAVING isInactive = 0)
+    	                          WHERE p.roomNumber IS NOT NULL
+    	                          ORDER BY p.patientID");
 	    }
 	}
     
@@ -80,7 +101,12 @@ else
 	                             ON r.departmentID = d.departmentID
 	                             LEFT JOIN diagnosis AS diag
 	                              ON p.patientID = diag.patientID
-    	                          WHERE p.roomNumber IS NOT NULL AND d.departmentID = ". $deptID);
+	                              AND diag.dateAssigned IN (SELECT MAX(dateAssigned)
+                                                            FROM diagnosis
+                                                            GROUP BY patientID
+                                                            HAVING isInactive = 0)
+    	                          WHERE p.roomNumber IS NOT NULL AND d.departmentID = ". $deptID."
+    	                          ORDER BY p.patientID");
 	    }
 	    else
 	    {
@@ -93,7 +119,12 @@ else
 	                             ON r.departmentID = d.departmentID
 	                             LEFT JOIN diagnosis AS diag
 	                              ON p.patientID = diag.patientID
-    	                          WHERE p.roomNumber IS NOT NULL");
+	                              AND diag.dateAssigned IN (SELECT MAX(dateAssigned)
+                                                            FROM diagnosis
+                                                            GROUP BY patientID
+                                                            HAVING isInactive = 0)
+    	                          WHERE p.roomNumber IS NOT NULL
+    	                          ORDER BY p.patientID");
 	    }
     }
     else
@@ -107,7 +138,12 @@ else
 	                      ON r.departmentID = d.departmentID
 	                      LEFT JOIN diagnosis AS diag
 	                      ON p.patientID = diag.patientID
-	                      WHERE p.roomNumber IS NOT NULL AND p.patientID = ". $_POST['patientID']);
+	                      AND diag.dateAssigned IN (SELECT MAX(dateAssigned)
+                                                            FROM diagnosis
+                                                            GROUP BY patientID
+                                                            HAVING isInactive = 0)
+	                      WHERE p.roomNumber IS NOT NULL AND p.patientID = ". $_POST['patientID']."
+	                      ORDER BY p.patientID");
     }
 	
 }
@@ -167,8 +203,31 @@ else
                 <li class="nav-item active">
                     <a class="nav-link">Current Dept: <?php echo $deptName; ?></a>
                 </li>
+                <?php }
+                else
+                { ?>
+                <li class="nav-item active">
+                    <form action="main.php" method="post" onsubmit="return true">
+                        <button type="submit" name="deptID" value="<?php echo getUserDept($_SESSION['user']); ?>" class="btn btn-outline-info ">Return to my Dept</button>
+                    </form>
+                </li>
                 <?php } ?>
             </ul>
+            <div class="form-inline my-2 ml-lg-2">
+                <form method='post' action='main.php' onsubmit='return true'>
+                    <button name="showInactive" value="<?php
+                            if($showInactive == 0)
+                                $btnVal =  "Show Discharged Patients";
+                            else if($showInactive == 1)
+                                $btnVal = "Show Active Patients";
+                            echo $btnVal;
+                        ?>" type="submit" class="btn btn-outline-info ">
+                        <?php 
+                            echo $btnVal;
+                        ?>
+                    </button>
+                </form>
+            </div>
             <div class="form-inline my-2 ml-lg-2">
                 <form method='post' action='viewRoomInformation.php' onsubmit='return true'>
                     <button type="submit" class="btn btn-outline-warning ">View Room Information</button>
@@ -192,30 +251,8 @@ else
 <body>
     <div class="container">
         <div class="center">
-          <!-- <h1>Main Menu</h1> -->
-          <h1>┴┬┴┤( ͡° ͜ʖ├┬┴┬</h1>
-          <!--Toggle active/discharged patients-->
-          <div class="toggleInactivePatientDiv" style= "width: 50%;  margin-left: auto; margin-right: auto;">
-			  <form method="post" onsubmit="return true" action="main.php">
-			<input type="submit" name="showInactive" onChange="this.form.submit();" <?php 
-								if(isset($_POST['showInactive']))
-								{
-									if($_POST['showInactive'] == "Show Discharged Patients")
-									{
-										echo "value = 'Show Active Patients'";
-									}
-									else
-									{
-										echo "value = 'Show Discharged Patients'";
-									}
-								}
-								else
-								{
-									echo "value = 'Show Discharged Patients'";
-								}?>   />
-			</form>
-		  </div>
-          
+          <h1>Main Menu</h1>
+          <!-- <h1>┴┬┴┤( ͡° ͜ʖ├┬┴┬</h1>-->
           <!--Search Bar-->
             <div class="input-group mb-3">
                 <span class="input-group-prepend">
@@ -260,6 +297,10 @@ else
                 if($showInactive == 0)
                 { ?>
                 <th>Room Number</th>
+                <?php }
+                else
+                { ?>
+                <th>Discharge Date</th>
                 <?php } ?>
                 <?php 
                 if($deptID == -1)
@@ -304,6 +345,13 @@ else
                 <td>
 					<a id="roomTableVal<?php echo $tableIndex ?>"><?php echo "$row[roomNumber]";?></a>
 				</td>
+				<?php }
+				else
+				{ ?>
+				<td>
+				    <input type='hidden' id="dischargeDate<?php echo $tableIndex ?>" value="<?php echo "$row[dischargeDate]"; ?>">
+				    <a id="dischargeDateVal<?php echo $tableIndex ?>"></a><?php echo "$row[dischargeDate]"; ?></a>
+				</td>
 				<?php } ?>
 				<input type="hidden" id="patientDeptID<?php echo $tableIndex ?>" value="<?php echo "$row[departmentID]"; ?>">
 				    <input type='hidden' id="patientDept<?php echo $tableIndex ?>" value="<?php echo "$row[departmentName]"; ?>">
@@ -337,7 +385,7 @@ else
                 <div class="popup_main_div">
                     <div class="popup_header">Patient Detail
                     </div>
-                    <div class="popup_main">
+                    <div id="main_popup" class="popup_main">
                         <form>
                             <div class="form-row">
                                 <div class="col">
@@ -353,6 +401,7 @@ else
                                     <input type="text" id="detailPatientLName" class="form-control" name="detailPatientLName" readonly="readonly"><br>
                                 </div>
                             </div>
+                            <?php if($showInactive == 0){ ?>
                             <div class="form-row">
                                 <div class="col">
                                     <label for="detailDeptNameSelected">Department:</label>
@@ -376,6 +425,7 @@ else
                                     </select>
                                 </div>
                             </div>
+                            <?php } ?>
                         </form>
                         <br>
                         <div class="row">
@@ -407,7 +457,7 @@ else
 
                             <div class="col-lg" align="center">
                             <?php if(isset($_SESSION['doctor'])){ 
-                                if(!isset($_POST['showInactive']))
+                                if($showInactive == 0)
                                 {
 	                                ?>
 	                                    <button id="dischargeBtnDetail" name="patientID" class="btn btn-outline-danger">Discharge Patient</button>
@@ -415,25 +465,46 @@ else
                                 }
                                 else
                                 {
-                                    if($_POST['showInactive'] != "Show Discharged Patients")
-	                                {
-	                                    ?>
-	                                        <button id="dischargeBtnDetail" name="patientID" class="btn btn-outline-danger">Discharge Patient</button>
-	                                    <?php
-	                                }
+                                    ?>
+                                    <form id = "admitForm" method="post" action ="main.php" onsubmit="return true">
+                                        <input type="hidden" name="patientID" id="admitPatientValue"/>
+                                        <button id="admitBtnDetail" name="patientID" class="btn btn-outline-danger">Admit Patient</button>
+                                    </form>
+                                    <?php
                                 }
 	                       ?>
-                                </div>
+                           </div>
+                           <?php if(isset($_SESSION['doctor'])){ 
+                                if($showInactive == 0){ ?>
+                                    <div class="col-lg" align="center">
+                                        <button id="assignBtnDetail" name="patientID" class="btn btn-outline-info"><a id="assignBtnLabel">Assign Patient to Me</a></button>
+                                    </div>
+                        <?php   }
+                           } ?>
                         </div>
+                        <?php if($showInactive == 0){ ?>
                             <div class="row">
                                 <div class="col-lg float-left">
-                                    <button id = "saveBtn" class="btn btn-success" onClick="saveDetails();">Save Changes</button>
+                                    <button id = "saveBtn" class="btn btn-success">Save Changes</button>
                                 </div>
                                 <div class="col-lg float-right">
+                                    <button id="assignedDoctorsBtn" name="patientID" class="btn btn-outline-info">Doctors Assigned</button>
                                     <img id= "editBtn" src="images/edit_mode.png" style="cursor: pointer; max-width: 50px; max-height: 50px; margin-left:10px; margin-top: 10px;" onClick="enableEditMode();" >
                                 </div>
                             </div>
+                            <?php } ?>
                             <?php }?>
+                        </div>
+                        <div id="assigned_popup" class="popup_main">
+                            <table id="assignedDetailTable" class="table table-striped">
+                                <tr>
+                                    <th></th>
+                                    <th>Doctor</th>
+                                    <th>Date Assigned</th>
+                                    <th>Department</th>
+                                    <th></th>
+                                </tr>
+                            </table>
                         </div>
                     <div id="close_popup_div" >
                         <p title="Close Detail Menu" >
@@ -446,6 +517,8 @@ else
         <!-- Scripting to display and hide patient detail popup menu -->
     <script type="text/javascript">
         var popup = document.getElementById("popup_bg");
+        var popup_main = document.getElementById("main_popup");
+        var popup_assigned = document.getElementById("assigned_popup");
         var historyPopup = document.getElementById("popup_history_bg");
         var IDMenuItem = document.getElementById("detailPatientID");
 		var fNameMenuItem = document.getElementById("detailPatientFName");
@@ -502,7 +575,9 @@ else
 			recordIndex = index;
 			
             popup.style.display="block";
-			<?php if(isset($_SESSION['doctor'])){ ?>
+            popup_main.style.display="block";
+            popup_assigned.style.display="none";
+			<?php if(isset($_SESSION['doctor']) && $showInactive == 0){ ?>
 			saveBtn.style.visibility= 'hidden';
 			<?php }?>
 			// lock scroll position, but retain settings for later
@@ -523,20 +598,25 @@ else
 			var IDIndex = "patientID" + index +"";
 			var fNameIndex = "patientFName" + index + "";
 			var lNameIndex = "patientLName" + index + "";
-			var deptIndex = "patientDeptID" + index + "";
-			var roomIndex = "patientRm" + index + "";
 			
 			patientID = document.getElementById(IDIndex);
 			patientFName = document.getElementById(fNameIndex);
 			patientLName = document.getElementById(lNameIndex);
-			patientDept = document.getElementById(deptIndex);
-			patientRm = document.getElementById(roomIndex);
-						
+			
 			IDMenuItem.value = patientID.value;
 			fNameMenuItem.value = patientFName.value;
 			lNameMenuItem.value = patientLName.value;
+			
+			<?php if($showInactive == 0) { ?>
+			var deptIndex = "patientDeptID" + index + "";
+			var roomIndex = "patientRm" + index + "";
+			
+			patientDept = document.getElementById(deptIndex);
+			patientRm = document.getElementById(roomIndex);
+						
 			deptMenuItem.value = patientDept.value;
 			roomMenuItem.value = patientRm.value;
+			<?php } ?>
 			
 			//Detail menu buttons to access tests, treatments, prescriptions and history
 			document.getElementById("diagnosisBtnDetail").value = patientID.value;
@@ -544,16 +624,28 @@ else
 			document.getElementById("treatmentBtnDetail").value = patientID.value;
 			document.getElementById("prescriptionBtnDetail").value = patientID.value;
 			document.getElementById("historyBtnDetail").value = patientID.value;
-			<?php if(isset($_SESSION['doctor'])){ ?>
+			<?php if(isset($_SESSION['doctor']) && $showInactive == 0){ ?>
 			document.getElementById("dischargeBtnDetail").value = patientID.value;
+			<?php } ?>
+			<?php if(isset($_SESSION['doctor']) && $showInactive == 1){ ?>
+			document.getElementById("admitBtnDetail").value = patientID.value;
+			document.getElementById("admitPatientValue").value = patientID.value;
 			<?php } ?>
 		}
         function closePopupMenu()
         {
-            <?php if(isset($_SESSION['doctor'])){ ?>
+            <?php if(isset($_SESSION['doctor']) && $showInactive == 0){ ?>
             disableEditMode();
             <?php }?>
-            popup.style.display = "none";
+            if(popup_assigned.style.display == "none")
+            {
+                popup.style.display = "none";
+            }
+            else
+            {
+                popup_assigned.style.display = "none";
+                popup_main.style.display = "block";
+            }
 			
 			// un-lock scroll position
 			var html = jQuery('html');
@@ -561,7 +653,7 @@ else
 			html.css('overflow', html.data('previous-overflow'));
 			window.scrollTo(scrollPosition[0], scrollPosition[1])
         }
-        <?php if(isset($_SESSION['doctor'])){ ?>
+        <?php if(isset($_SESSION['doctor']) && $showInactive == 0){ ?>
         function enableEditMode()
         {
             if(!isEditing)
@@ -592,54 +684,105 @@ else
                 isEditing = false;
             }
         }
+        
+        function formatString(string) 
+        {
+            string = string.toLowerCase();
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+        
+        function validate(fNameInput,lNameInput,roomInput)
+        {
+        
+            if(fNameInput == "")
+            {
+                alert("First Name cannot be blank.");
+                return false;
+            }
+        
+            if(lNameInput == "")
+            {
+                alert("Last Name cannot be blank.");
+                return false;
+            }
+        
+            var regex = new RegExp(/^[A-Za-z0-9 ]+$/);
+        
+            if(regex.test(fNameInput) == false)
+            {
+                alert("First Name cannot contain special characters.");
+                return false;
+            }
+        
+             else if(regex.test(lNameInput) == false)
+             {
+                alert("Last Name cannot contain special characters.");
+                return false;
+             }
+        
+         if(roomInput == 0)
+         {
+                alert("Please select a room for the patient.");
+                return false;
+         }
+        
+        return true;
+    }
         <?php }?>
         // JQuery to handle updating patient record
 		$(document).ready(function(){
 			$("#saveBtn").click(function(){
 				var pk = patientID.value;
-				var newFName = fNameMenuItem.value;
-				var newLName = lNameMenuItem.value;
+				var newFName = formatString(fNameMenuItem.value);
+				var newLName = formatString(lNameMenuItem.value);
 				var newDept = deptMenuItem.value;
 				var newRoom = roomMenuItem.value;
 				var updatedRecordFName = document.getElementById("fNameTableVal" + recordIndex);
 				var updatedRecordLName = document.getElementById("lNameTableVal" + recordIndex);
 				var updatedRecordDept = document.getElementById("deptTableVal" + recordIndex);
 				var updatedRecordRoom = document.getElementById("roomTableVal" + recordIndex);
-			    //ajax call to run update function
-				$.ajax({
-					url: "saveChanges.php",
-					method: "post",
-					data: { primaryKey: pk, fname: newFName, lname: newLName, room: newRoom},
-					success: function(response){
-						console.log(response);
-						//if patient was not assigned in a room, admit the patient
-						if($(patientRm).val() == '')
-						{
-						    $.ajax({
-						        url: "admitPatient.php",
-						        method: "post",
-						        data: {patientID: pk},
-						        success: function(response){
-						            console.log(response);
-						            window.location.href='main.php';
-						        }
-						    })
-						}
-						//After update, update ui elements
-						$(updatedRecordFName).text(newFName);
-						$(updatedRecordLName).text(newLName);
-						$(updatedRecordDept).text(deptName);
-						$(updatedRecordRoom).text(newRoom);
+				
+				if(validate(newFName,newLName,newRoom) == true)
+				{
+				    //ajax call to run update function
+			    	$.ajax({
+				    	url: "saveChanges.php",
+				    	method: "post",
+				    	data: { primaryKey: pk, fname: newFName, lname: newLName, room: newRoom},
+			    		success: function(response){
+			    			console.log(response);
+			    			//if patient was not assigned in a room, admit the patient
+			    			if($(patientRm).val() == '')
+				    		{
+				    		    $.ajax({
+				    		        url: "admitPatient.php",
+				    		        method: "post",
+				    		        data: {patientID: pk},
+				    		        success: function(response){
+				    		            console.log(response);
+				    		            window.location.href='main.php';
+					    	        }
+						         });
+						    }
+						    //After update, update ui elements
+					    	$(updatedRecordFName).text(newFName);
+					    	$(updatedRecordLName).text(newLName);
+				    		$(updatedRecordDept).text(deptName);
+			    			$(updatedRecordRoom).text(newRoom);
 						
-						$(patientFName).val(newFName);
-						$(patientLName).val(newLName);
-						$(patientDept).val(newDept);
-						$(patientRm).val(newRoom);
-					}
-				});
+		    				$(patientFName).val(newFName);
+		    				$(patientLName).val(newLName);
+			    			$(patientDept).val(newDept);
+		    				$(patientRm).val(newRoom);
+		    				
+		    			    saveDetails();
+				    	}
+				    });
+				}
 			});
 		});
 		
+		<?php if($showInactive == 0) { ?>
 		//JQuery to handle setting up room dropdown
 		$(document).ready(function(){
 		$("button[name=detailBtn]").click(function(){
@@ -663,13 +806,128 @@ else
 		                    
 		                }
 		                $(roomMenuItem).val(patientRoom);
+		                
+		                
 		            }
 		        });
+		        <?php if(isset($_SESSION['doctor'])) { ?>
+		        $.ajax({
+		                    url: "getDoctorsAssignedToPatient.php",
+		                    type: "post",
+		                    data: {patientID: patientID.value},
+		                    dataType: "json",
+		                    success:function(response){
+	    	                    var len= response.length;
+		                        var doctorIsAssigned = 0;
+	    	                    if(len > 0)
+	    	                    {
+	    	                        for(var i = 0; i<len; i++)
+	    	                        {
+	    	                            var id = response[i]['userID'];
+	    	                            if(id == <?php echo $_SESSION['id'] ?>)
+	    	                            {
+	    	                                doctorIsAssigned = 1;
+	    	                                break;
+	    	                            }
+	    	                        }
+	    	                        if(doctorIsAssigned == 1)
+	    	                        {
+	    	                            $("#assignBtnLabel").text("Unassign Patient from Me");
+	    	                        }
+	    	                        else
+	    	                        {
+	    	                            $("#assignBtnLabel").text("Assign Patient to Me");
+	    	                        }
+	    	                    }
+	    	                    else
+	    	                    {
+	    	                        $("#assignBtnLabel").text("Assign Patient to Me");
+	    	                    }
+		                    }
+		        });
+		        <?php } ?>
 		    });
 		});
 		
-		// JQuery to handle user changing dept selection and update rooms
+		<?php if(isset($_SESSION['doctor'])){ ?>
 		$(document).ready(function(){
+		    $("#assignedDoctorsBtn").click(function(){
+		        if(isEditing)
+		        {
+		            var dialog = confirm("Are you sure you want to close? Any unsaved changes will be lost.");
+		            
+		            if(dialog == true)
+		            {
+		                $("#assignedDetailTable").find("tr:gt(0)").remove();
+		                disableEditMode();
+		                $.ajax({
+		                    url: "getDoctorsAssignedToPatient.php",
+		                    type: "post",
+		                    data: {patientID: patientID.value},
+		                    dataType: "json",
+		                    success:function(response){
+	    	                    var len= response.length;
+		                
+	    	                    if(len > 0)
+	    	                    {
+	    	                        for(var i = 0; i<len; i++)
+	    	                        {
+		                                var name = response[i]['drName'];
+		                                var date = response[i]['date'];
+		                                var dept = response[i]['dept'];
+		                                
+		                                $("#assignedDetailTable tr:last").after("<tr><td></td><td>"+name+"</td><td>"+date+"</td><td>"+dept+"</td></tr>");
+	    	                        }
+		                            popup_main.style.display="none";
+		                            popup_assigned.style.display="block";
+		                        }
+		                        else
+		                        {
+		                            alert("Patient is not assigned to any doctors.");
+		                        }
+		                    }
+		                });
+		            }
+	    	    }
+		        else
+		        {
+		            $("#assignedDetailTable").find("tr:gt(0)").remove();
+		            disableEditMode();
+		            $.ajax({
+		                    url: "getDoctorsAssignedToPatient.php",
+		                    type: "post",
+		                    data: {patientID: patientID.value},
+		                    dataType: "json",
+		                    success:function(response){
+	    	                    var len= response.length;
+		                
+	    	                    if(len > 0)
+	    	                    {
+	    	                        for(var i = 0; i<len; i++)
+	    	                        {
+		                                var name = response[i]['drName'];
+		                                var date = response[i]['date'];
+		                                var dept = response[i]['dept'];
+		                                
+		                                $("#assignedDetailTable tr:last").after("<tr><td></td><td>"+name+"</td><td>"+date+"</td><td>"+dept+"</td></tr>");
+	    	                        }
+		                            popup_main.style.display="none";
+		                            popup_assigned.style.display="block";
+		                        }
+		                        else
+		                        {
+		                            alert("Patient is not assigned to any doctors.");
+		                        }
+		                    }
+		                });
+		        }
+		        
+		    });
+		});
+		<?php } ?>
+		        
+		// JQuery to handle user changing dept selection and update rooms
+		$(document).ready(function(){ 
 		    $("#detailDeptList").change(function(){
 		        var deptID = deptMenuItem.value;
 		        
@@ -693,7 +951,8 @@ else
 		            }
 		        });
 		    });
-		});
+		}); 
+		
 		//JQuery to discharge patient when doctor clicks dischargeBtn
 		$(document).ready(function(){
 		    $("#dischargeBtnDetail").click(function(){
@@ -714,10 +973,76 @@ else
 		    });
 		});
 		
+		$(document).ready(function(){
+		    $("#assignBtnDetail").click(function(){
+		        if($("#assignBtnLabel").text() == "Assign Patient to Me")
+		        {
+	    	        $.ajax({
+    		            url: "assignDoctorToPatient.php",
+    		            type: "post",
+    		            data: {patient: patientID.value, user: <?php echo $_SESSION['id']; ?> },
+	    	            success:function(response){
+	    	                console.log(response);
+	    	                $("#assignBtnLabel").text("Unassign Patient from Me");
+	    	                alert("You have been assigned to this patient.");
+	    	            }
+	    	        });
+		        }
+		        else
+		        {
+		            $.ajax({
+    		            url: "unassignDoctorToPatient.php",
+    		            type: "post",
+    		            data: {patient: patientID.value, user: <?php echo $_SESSION['id']; ?> },
+	    	            success:function(response){
+	    	                console.log(response);
+	    	                $("#assignBtnLabel").text("Assign Patient to Me");
+	    	                alert("You have been unassigned from this patient.");
+	    	            }
+	    	        });
+		        }
+		    })
+		})
+		<?php }
+		else { ?>
+		//JQuery to Admit patient when doctor clicks admitBtn
+		$(document).ready(function(){
+		    var submitReady = 0;
+		    $("#admitForm").submit(function(e){
+		        if(submitReady)
+		        {
+		            return;
+		        }
+		        else
+		        {
+		            e.preventDefault();
+		        }
+		    });
+		    
+		    $("#admitBtnDetail").click(function(){
+		        var dialog = confirm("Are you sure you want to admit patient?");
+		        var patient = $(this).val();
+		    
+		        if(dialog == true)
+		        {
+		            $.ajax({
+		                url: "admitPatient.php",
+		                type: "post",
+		                data: {patientID: patient, setRoom: true},
+		                success:function(response){
+		                    submitReady = 1;
+		                    $("#admitForm").submit();
+		                }
+		            })
+		        }
+		    });
+		});
+		<?php } ?>
+		
 		//If in editing mode, and the close button is clicked confirm that the user doesnt want to save changes
 		$(document).ready(function(){
 		    $("#close_popup_div").click(function(){
-		        if(isEditing)
+                if(isEditing)
 		        {
 		            var dialog = confirm("Are you sure you want to close? Any unsaved changes will be lost.");
 		            
@@ -725,12 +1050,7 @@ else
 		            {
 		                closePopupMenu();
 		            }
-		            else
-		            {
-		                
-		            }
-		        }
-		        
+	    	    }
 		        else
 		        {
 		            closePopupMenu();
